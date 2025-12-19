@@ -9,9 +9,10 @@ import { RolesGuard } from './modules/auth/roles.guard';
 import { ChannelsModule } from './modules/channels/channels.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { TeamsModule } from './modules/teams/teams.module';
+import { ContactsModule } from './modules/contacts/contacts.module';
 
 @Module({
-  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule],
+  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule],
   controllers: [],
   providers: [
     PrismaService,
