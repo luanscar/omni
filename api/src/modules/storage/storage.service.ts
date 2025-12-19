@@ -1,7 +1,7 @@
 import { Injectable, InternalServerErrorException, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
 import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { PrismaService } from '../../prisma.service';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 import * as path from 'path';
 
@@ -11,7 +11,6 @@ export class StorageService implements OnModuleInit {
   private bucketName = 'omni-bucket';
 
   constructor(private prisma: PrismaService) {
-    // Configuração para LocalStack ou AWS Real
     this.s3Client = new S3Client({
       region: process.env.AWS_REGION || 'us-east-1',
       endpoint: process.env.AWS_ENDPOINT || 'http://localhost:4566',
@@ -23,24 +22,21 @@ export class StorageService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {
-    // Em produção, crie o bucket via Terraform/Console.
-    // Aqui no dev, podemos tentar criar se não existir (opcional),
-    // mas geralmente o script de init do LocalStack faz isso.
-  }
+  async onModuleInit() { }
 
-  async uploadFile(file: any, tenantId: string, uploaderId: string) {
+  // Atualizado para aceitar uploaderId nulo (upload de sistema)
+  async uploadFile(file: any, tenantId: string, uploaderId?: string | null) {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo enviado.');
     }
 
-    const fileExtension = path.extname(file.filename);
+    // Se file.filename vier vazio, tenta gerar um nome
+    const originalName = file.filename || 'file.bin';
+    const fileExtension = path.extname(originalName) || '.jpg';
     const fileName = `${uuidv4()}${fileExtension}`;
-    const key = `${tenantId}/${fileName}`; // Organiza pastas por Tenant
+    const key = `${tenantId}/${fileName}`;
 
     try {
-      // Bufferiza o arquivo (para arquivos gigantes, streams são melhores, 
-      // mas o buffer simplifica o cálculo do tamanho aqui)
       const buffer = await file.toBuffer();
 
       await this.s3Client.send(
@@ -52,16 +48,15 @@ export class StorageService implements OnModuleInit {
         }),
       );
 
-      // Salva metadados no banco
       const media = await this.prisma.media.create({
         data: {
           fileName: fileName,
-          originalName: file.filename,
+          originalName: originalName,
           mimeType: file.mimetype,
           size: buffer.length,
           key: key,
           tenantId,
-          uploaderId,
+          uploaderId: uploaderId || null, // Garante null se for undefined
         },
       });
 
@@ -91,7 +86,6 @@ export class StorageService implements OnModuleInit {
     return media;
   }
 
-  // Gera uma URL temporária (assinada) para download seguro
   async getDownloadUrl(id: string, tenantId: string) {
     const media = await this.findOne(id, tenantId);
 
@@ -101,7 +95,6 @@ export class StorageService implements OnModuleInit {
         Key: media.key,
       });
 
-      // URL válida por 1 hora
       const url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
       return { url, ...media };
     } catch (error) {
@@ -111,8 +104,6 @@ export class StorageService implements OnModuleInit {
 
   async remove(id: string, tenantId: string) {
     const media = await this.findOne(id, tenantId);
-
-    // 1. Remove do S3
     try {
       await this.s3Client.send(
         new DeleteObjectCommand({
@@ -122,10 +113,7 @@ export class StorageService implements OnModuleInit {
       );
     } catch (error) {
       console.error('Erro ao deletar do S3:', error);
-      // Podemos continuar para deletar do banco mesmo se falhar no S3 (evita registros fantasmas)
     }
-
-    // 2. Remove do Banco
     return this.prisma.media.delete({
       where: { id },
     });

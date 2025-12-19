@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { CreateWhatsappDto } from './dto/create-whatsapp.dto';
-import { UpdateWhatsappDto } from './dto/update-whatsapp.dto';
-import { PrismaService } from 'src/prisma.service';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { PrismaService } from '../../prisma.service';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import makeWASocket, {
   DisconnectReason,
   useMultiFileAuthState,
@@ -13,55 +13,54 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 @Injectable()
-export class WhatsappService {
-
-
+export class WhatsappService implements OnModuleInit {
   private readonly logger = new Logger(WhatsappService.name);
+  // Tornei pública a leitura do map (ou criei um getter abaixo)
   private sessions = new Map<string, WASocket>();
   private qrCodes = new Map<string, string>();
   private connectionStatus = new Map<string, string>();
 
-  constructor(private prisma: PrismaService) { }
-
+  constructor(
+    private prisma: PrismaService,
+    @InjectQueue('whatsapp-events') private queue: Queue
+  ) { }
 
   async onModuleInit() {
     this.ensureSessionsDir();
-    await this.reconnectSavedSessions(); // <--- Reconexão automática ao iniciar
+    await this.reconnectSavedSessions();
   }
 
+  // --- NOVO MÉTODO ---
+  // Permite que outros serviços (como o Processor) acessem o socket ativo
+  getSocket(channelId: string): WASocket | undefined {
+    return this.sessions.get(channelId);
+  }
+  // -------------------
 
   private ensureSessionsDir() {
     const dir = path.join(process.cwd(), 'sessions');
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir);
-    }
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
   }
 
-  // Busca canais ativos no banco e tenta reconectar se existir pasta de sessão
   private async reconnectSavedSessions() {
-    this.logger.log('Checking for saved WhatsApp sessions...');
-
     const channels = await this.prisma.channel.findMany({
-      where: {
-        type: 'WHATSAPP',
-        active: true
-      },
+      where: { type: 'WHATSAPP', active: true },
     });
-
     for (const channel of channels) {
       const sessionPath = path.join(process.cwd(), 'sessions', channel.id);
-      // Só tenta reconectar se já existir a pasta de credenciais
       if (fs.existsSync(sessionPath)) {
-        this.logger.log(`Restoring session for channel: ${channel.name} (${channel.id})`);
-        this.startSession(channel.id);
+        this.startSession(channel.id, channel.tenantId);
       }
     }
   }
 
-  async startSession(channelId: string) {
-    // Evita duplicidade de socket na memória
+  async startSession(channelId: string, tenantId?: string) {
+    if (!tenantId) {
+      const channel = await this.prisma.channel.findUnique({ where: { id: channelId } });
+      tenantId = channel?.tenantId;
+    }
+
     if (this.sessions.has(channelId)) {
-      this.logger.log(`Session ${channelId} already exists in memory`);
       return { status: this.connectionStatus.get(channelId) || 'UNKNOWN' };
     }
 
@@ -82,49 +81,40 @@ export class WhatsappService {
 
     socket.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
-
       if (qr) {
-        this.logger.debug(`QR Code generated for ${channelId}`);
         const qrCodeDataURL = await qrcode.toDataURL(qr);
         this.qrCodes.set(channelId, qrCodeDataURL);
         this.connectionStatus.set(channelId, 'QRCODE_READY');
       }
-
       if (connection === 'close') {
-        const statusCode = (lastDisconnect?.error as any)?.output?.statusCode;
-        const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-
-        this.logger.warn(`Connection closed for ${channelId}. Reconnecting: ${shouldReconnect}`);
-
+        const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
         this.cleanUpSession(channelId);
-
         if (shouldReconnect) {
-          // Tenta reconectar (loop infinito de tentativas pode ser perigoso, ideal adicionar backoff)
-          setTimeout(() => this.startSession(channelId), 3000);
+          setTimeout(() => this.startSession(channelId, tenantId), 3000);
         } else {
           this.connectionStatus.set(channelId, 'DISCONNECTED');
-          // Se foi logout (desconectado pelo celular), atualiza o banco
-          await this.prisma.channel.update({
-            where: { id: channelId },
-            data: { active: false, identifier: null }
-          });
+          await this.prisma.channel.update({ where: { id: channelId }, data: { active: false, identifier: null } });
         }
       } else if (connection === 'open') {
-        this.logger.log(`Connection opened for ${channelId}`);
         this.connectionStatus.set(channelId, 'CONNECTED');
         this.qrCodes.delete(channelId);
-
-        // Pega o número do telefone conectado (JID)
         const userJid = socket.user?.id ? socket.user.id.split(':')[0] : null;
-
-        // Atualiza o banco com o identificador oficial e marca como ativo
         if (userJid) {
-          await this.prisma.channel.update({
-            where: { id: channelId },
-            data: {
-              identifier: userJid,
-              active: true
-            }
+          await this.prisma.channel.update({ where: { id: channelId }, data: { identifier: userJid, active: true } });
+        }
+      }
+    });
+
+    socket.ev.on('messages.upsert', async (m) => {
+      if (m.type === 'notify') {
+        for (const msg of m.messages) {
+          await this.queue.add('process-message', {
+            message: msg,
+            channelId: channelId,
+            tenantId: tenantId
+          }, {
+            attempts: 3,
+            backoff: 5000
           });
         }
       }
@@ -144,22 +134,12 @@ export class WhatsappService {
   async logout(channelId: string) {
     const socket = this.sessions.get(channelId);
     if (socket) {
-      await socket.logout(); // Isso vai disparar o evento 'close' com motivo loggedOut
+      await socket.logout();
       this.cleanUpSession(channelId);
-
       const authPath = path.join(process.cwd(), 'sessions', channelId);
-      if (fs.existsSync(authPath)) {
-        fs.rmSync(authPath, { recursive: true, force: true });
-      }
-
+      if (fs.existsSync(authPath)) fs.rmSync(authPath, { recursive: true, force: true });
       this.connectionStatus.set(channelId, 'DISCONNECTED');
-
-      // Atualiza banco para refletir o logout
-      await this.prisma.channel.update({
-        where: { id: channelId },
-        data: { active: false, identifier: null }
-      });
-
+      await this.prisma.channel.update({ where: { id: channelId }, data: { active: false, identifier: null } });
       return { status: 'LOGGED_OUT' };
     }
     throw new Error('Session not found');
