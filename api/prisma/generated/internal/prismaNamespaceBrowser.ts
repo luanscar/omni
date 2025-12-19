@@ -56,6 +56,7 @@ export const ModelName = {
   Channel: 'Channel',
   Contact: 'Contact',
   Tenant: 'Tenant',
+  Media: 'Media',
   User: 'User'
 } as const
 
@@ -139,6 +140,22 @@ export const TenantScalarFieldEnum = {
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+
+
+export const MediaScalarFieldEnum = {
+  id: 'id',
+  fileName: 'fileName',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
+  size: 'size',
+  key: 'key',
+  publicUrl: 'publicUrl',
+  tenantId: 'tenantId',
+  uploaderId: 'uploaderId',
+  createdAt: 'createdAt'
+} as const
+
+export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {

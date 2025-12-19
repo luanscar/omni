@@ -83,8 +83,29 @@ model Tenant {
   contacts  Contact[]
   users     User[]
   teams     Team[]
+  medias    Media[]
 
   @@map("tenants")
+}
+
+model Media {
+  id           String  @id @default(uuid())
+  fileName     String // Nome salvo no bucket (geralmente um UUID)
+  originalName String // Nome original do arquivo (ex: relatorio.pdf)
+  mimeType     String // ex: application/pdf, image/png
+  size         Int // Tamanho em bytes
+  key          String // Caminho/Chave no S3
+  publicUrl    String? // URL pública (se o bucket for público)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  uploaderId String?
+  uploader   User?   @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@map("medias")
 }
 
 model User {
@@ -100,6 +121,7 @@ model User {
   updatedAt       DateTime     @updatedAt
   tenant          Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   teamMemberships TeamMember[]
+  uploadedMedias  Media[]
 
   @@map("users")
 }

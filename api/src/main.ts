@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import multipart from '@fastify/multipart';
 import {
   FastifyAdapter,
   NestFastifyApplication,
@@ -18,6 +19,12 @@ async function bootstrap() {
   );
 
   app.enableCors();
+
+  await app.register(multipart, {
+    limits: {
+      fileSize: 5 * 1024 * 1024, // Limite de 5MB por arquivo (ajuste conforme necessário)
+    },
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Omni SaaS API')

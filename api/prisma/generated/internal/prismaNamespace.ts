@@ -389,6 +389,7 @@ export const ModelName = {
   Channel: 'Channel',
   Contact: 'Contact',
   Tenant: 'Tenant',
+  Media: 'Media',
   User: 'User'
 } as const
 
@@ -405,7 +406,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "teamMember" | "team" | "channel" | "contact" | "tenant" | "user"
+    modelProps: "teamMember" | "team" | "channel" | "contact" | "tenant" | "media" | "user"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -779,6 +780,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         }
       }
     }
+    Media: {
+      payload: Prisma.$MediaPayload<ExtArgs>
+      fields: Prisma.MediaFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.MediaFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.MediaFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>
+        }
+        findFirst: {
+          args: Prisma.MediaFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.MediaFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>
+        }
+        findMany: {
+          args: Prisma.MediaFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>[]
+        }
+        create: {
+          args: Prisma.MediaCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>
+        }
+        createMany: {
+          args: Prisma.MediaCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.MediaCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>[]
+        }
+        delete: {
+          args: Prisma.MediaDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>
+        }
+        update: {
+          args: Prisma.MediaUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>
+        }
+        deleteMany: {
+          args: Prisma.MediaDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.MediaUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.MediaUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>[]
+        }
+        upsert: {
+          args: Prisma.MediaUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$MediaPayload>
+        }
+        aggregate: {
+          args: Prisma.MediaAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateMedia>
+        }
+        groupBy: {
+          args: Prisma.MediaGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MediaGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.MediaCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.MediaCountAggregateOutputType> | number
+        }
+      }
+    }
     User: {
       payload: Prisma.$UserPayload<ExtArgs>
       fields: Prisma.UserFieldRefs
@@ -958,6 +1033,22 @@ export const TenantScalarFieldEnum = {
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
 
 
+export const MediaScalarFieldEnum = {
+  id: 'id',
+  fileName: 'fileName',
+  originalName: 'originalName',
+  mimeType: 'mimeType',
+  size: 'size',
+  key: 'key',
+  publicUrl: 'publicUrl',
+  tenantId: 'tenantId',
+  uploaderId: 'uploaderId',
+  createdAt: 'createdAt'
+} as const
+
+export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum]
+
+
 export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
@@ -1099,6 +1190,20 @@ export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$Prisma
 
 
 /**
+ * Reference to a field of type 'Int'
+ */
+export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+    
+
+
+/**
+ * Reference to a field of type 'Int[]'
+ */
+export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+    
+
+
+/**
  * Reference to a field of type 'UserRole'
  */
 export type EnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'UserRole'>
@@ -1113,16 +1218,16 @@ export type ListEnumUserRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
 
 
 /**
- * Reference to a field of type 'Int'
+ * Reference to a field of type 'Float'
  */
-export type IntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int'>
+export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
     
 
 
 /**
- * Reference to a field of type 'Int[]'
+ * Reference to a field of type 'Float[]'
  */
-export type ListIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Int[]'>
+export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 /**
@@ -1225,6 +1330,7 @@ export type GlobalOmitConfig = {
   channel?: Prisma.ChannelOmit
   contact?: Prisma.ContactOmit
   tenant?: Prisma.TenantOmit
+  media?: Prisma.MediaOmit
   user?: Prisma.UserOmit
 }
 

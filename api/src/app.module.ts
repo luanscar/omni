@@ -10,9 +10,10 @@ import { ChannelsModule } from './modules/channels/channels.module';
 import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { TeamsModule } from './modules/teams/teams.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
+import { StorageModule } from './modules/storage/storage.module';
 
 @Module({
-  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule],
+  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule, StorageModule],
   controllers: [],
   providers: [
     PrismaService,
