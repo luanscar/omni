@@ -10,7 +10,7 @@ async function main() {
     console.log('Iniciando seed...');
 
     const tenantId = uuidv4();
-    const tenant = await prisma.tenants.upsert({
+    const tenant = await prisma.tenant.upsert({
         where: { slug: 'master' },
         update: {},
         create: {
@@ -27,7 +27,7 @@ async function main() {
     const hashedPassword = await bcrypt.hash('admin123', 10);
 
     // Criar Usuário Administrador
-    const user = await prisma.users.upsert({
+    const user = await prisma.user.upsert({
         where: { email: 'admin@omni.com' },
         update: {},
         create: {

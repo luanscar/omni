@@ -5,10 +5,10 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TenantsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(data: CreateTenantDto) {
-    const existing = await this.prisma.tenants.findUnique({
+    const existing = await this.prisma.tenant.findUnique({
       where: { slug: data.slug },
     });
 
@@ -16,17 +16,17 @@ export class TenantsService {
       throw new Error('Tenant with this slug already exists');
     }
 
-    return this.prisma.tenants.create({
+    return this.prisma.tenant.create({
       data,
     });
   }
 
   findAll() {
-    return this.prisma.tenants.findMany();
+    return this.prisma.tenant.findMany();
   }
 
   findOne(id: string) {
-    return this.prisma.tenants.findUnique({
+    return this.prisma.tenant.findUnique({
       where: { id },
       include: {
         users: true, // Inclui usuários retornados para visualização (cuidado em prod)
@@ -36,14 +36,14 @@ export class TenantsService {
   }
 
   update(id: string, data: UpdateTenantDto) {
-    return this.prisma.tenants.update({
+    return this.prisma.tenant.update({
       where: { id },
       data,
     });
   }
 
   remove(id: string) {
-    return this.prisma.tenants.delete({
+    return this.prisma.tenant.delete({
       where: { id },
     });
   }

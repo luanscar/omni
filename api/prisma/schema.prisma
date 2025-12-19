@@ -7,7 +7,7 @@ datasource db {
   provider = "postgresql"
 }
 
-model channels {
+model Channel {
   id         String      @id @default(uuid())
   name       String
   type       ChannelType
@@ -17,10 +17,12 @@ model channels {
   tenantId   String
   createdAt  DateTime    @default(now())
   updatedAt  DateTime    @updatedAt
-  tenants    tenants     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("channels")
 }
 
-model contacts {
+model Contact {
   id            String   @id @default(uuid())
   name          String
   phoneNumber   String?
@@ -30,24 +32,27 @@ model contacts {
   tenantId      String
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  tenants       tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([phoneNumber, tenantId])
+  @@map("contacts")
 }
 
-model tenants {
-  id        String     @id @default(uuid())
+model Tenant {
+  id        String    @id @default(uuid())
   name      String
-  slug      String     @unique
-  active    Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  channels  channels[]
-  contacts  contacts[]
-  users     users[]
+  slug      String    @unique
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  channels  Channel[]
+  contacts  Contact[]
+  users     User[]
+
+  @@map("tenants")
 }
 
-model users {
+model User {
   id        String   @id @default(uuid())
   email     String   @unique
   password  String
@@ -58,7 +63,9 @@ model users {
   tenantId  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  tenants   tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("users")
 }
 
 enum ChannelType {

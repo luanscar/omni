@@ -20,7 +20,7 @@ const config: runtime.GetPrismaClientConfig = {
   "clientVersion": "7.2.0",
   "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel channels {\n  id         String      @id @default(uuid())\n  name       String\n  type       ChannelType\n  identifier String?\n  token      String?\n  active     Boolean     @default(true)\n  tenantId   String\n  createdAt  DateTime    @default(now())\n  updatedAt  DateTime    @updatedAt\n  tenants    tenants     @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n}\n\nmodel contacts {\n  id            String   @id @default(uuid())\n  name          String\n  phoneNumber   String?\n  email         String?\n  profilePicUrl String?\n  customFields  Json?\n  tenantId      String\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n  tenants       tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([phoneNumber, tenantId])\n}\n\nmodel tenants {\n  id        String     @id @default(uuid())\n  name      String\n  slug      String     @unique\n  active    Boolean    @default(true)\n  createdAt DateTime   @default(now())\n  updatedAt DateTime   @updatedAt\n  channels  channels[]\n  contacts  contacts[]\n  users     users[]\n}\n\nmodel users {\n  id        String   @id @default(uuid())\n  email     String   @unique\n  password  String\n  name      String\n  role      UserRole @default(AGENT)\n  active    Boolean  @default(true)\n  avatarUrl String?\n  tenantId  String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  tenants   tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n}\n\nenum ChannelType {\n  WHATSAPP\n  INSTAGRAM\n  TELEGRAM\n  WEBCHAT\n}\n\nenum UserRole {\n  ADMIN\n  AGENT\n  MANAGER\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Channel {\n  id         String      @id @default(uuid())\n  name       String\n  type       ChannelType\n  identifier String?\n  token      String?\n  active     Boolean     @default(true)\n  tenantId   String\n  createdAt  DateTime    @default(now())\n  updatedAt  DateTime    @updatedAt\n  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@map(\"channels\")\n}\n\nmodel Contact {\n  id            String   @id @default(uuid())\n  name          String\n  phoneNumber   String?\n  email         String?\n  profilePicUrl String?\n  customFields  Json?\n  tenantId      String\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([phoneNumber, tenantId])\n  @@map(\"contacts\")\n}\n\nmodel Tenant {\n  id        String    @id @default(uuid())\n  name      String\n  slug      String    @unique\n  active    Boolean   @default(true)\n  createdAt DateTime  @default(now())\n  updatedAt DateTime  @updatedAt\n  channels  Channel[]\n  contacts  Contact[]\n  users     User[]\n\n  @@map(\"tenants\")\n}\n\nmodel User {\n  id        String   @id @default(uuid())\n  email     String   @unique\n  password  String\n  name      String\n  role      UserRole @default(AGENT)\n  active    Boolean  @default(true)\n  avatarUrl String?\n  tenantId  String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@map(\"users\")\n}\n\nenum ChannelType {\n  WHATSAPP\n  INSTAGRAM\n  TELEGRAM\n  WEBCHAT\n}\n\nenum UserRole {\n  ADMIN\n  AGENT\n  MANAGER\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -28,7 +28,7 @@ const config: runtime.GetPrismaClientConfig = {
   }
 }
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"channels\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ChannelType\"},{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenants\",\"kind\":\"object\",\"type\":\"tenants\",\"relationName\":\"channelsTotenants\"}],\"dbName\":null},\"contacts\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phoneNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"profilePicUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"customFields\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenants\",\"kind\":\"object\",\"type\":\"tenants\",\"relationName\":\"contactsTotenants\"}],\"dbName\":null},\"tenants\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"channels\",\"kind\":\"object\",\"type\":\"channels\",\"relationName\":\"channelsTotenants\"},{\"name\":\"contacts\",\"kind\":\"object\",\"type\":\"contacts\",\"relationName\":\"contactsTotenants\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"users\",\"relationName\":\"tenantsTousers\"}],\"dbName\":null},\"users\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenants\",\"kind\":\"object\",\"type\":\"tenants\",\"relationName\":\"tenantsTousers\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Channel\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"type\",\"kind\":\"enum\",\"type\":\"ChannelType\"},{\"name\":\"identifier\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"token\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"ChannelToTenant\"}],\"dbName\":\"channels\"},\"Contact\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"phoneNumber\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"profilePicUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"customFields\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"ContactToTenant\"}],\"dbName\":\"contacts\"},\"Tenant\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"slug\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"channels\",\"kind\":\"object\",\"type\":\"Channel\",\"relationName\":\"ChannelToTenant\"},{\"name\":\"contacts\",\"kind\":\"object\",\"type\":\"Contact\",\"relationName\":\"ContactToTenant\"},{\"name\":\"users\",\"kind\":\"object\",\"type\":\"User\",\"relationName\":\"TenantToUser\"}],\"dbName\":\"tenants\"},\"User\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"email\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"password\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"role\",\"kind\":\"enum\",\"type\":\"UserRole\"},{\"name\":\"active\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"avatarUrl\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"tenantId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"tenant\",\"kind\":\"object\",\"type\":\"Tenant\",\"relationName\":\"TenantToUser\"}],\"dbName\":\"users\"}},\"enums\":{},\"types\":{}}")
 
 async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Module> {
   const { Buffer } = await import('node:buffer')
@@ -59,7 +59,7 @@ export interface PrismaClientConstructor {
    * ```
    * const prisma = new PrismaClient()
    * // Fetch zero or more Channels
-   * const channels = await prisma.channels.findMany()
+   * const channels = await prisma.channel.findMany()
    * ```
    * 
    * Read more in our [docs](https://pris.ly/d/client).
@@ -81,7 +81,7 @@ export interface PrismaClientConstructor {
  * ```
  * const prisma = new PrismaClient()
  * // Fetch zero or more Channels
- * const channels = await prisma.channels.findMany()
+ * const channels = await prisma.channel.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -175,44 +175,44 @@ export interface PrismaClient<
   }>>
 
       /**
-   * `prisma.channels`: Exposes CRUD operations for the **channels** model.
+   * `prisma.channel`: Exposes CRUD operations for the **Channel** model.
     * Example usage:
     * ```ts
     * // Fetch zero or more Channels
-    * const channels = await prisma.channels.findMany()
+    * const channels = await prisma.channel.findMany()
     * ```
     */
-  get channels(): Prisma.channelsDelegate<ExtArgs, { omit: OmitOpts }>;
+  get channel(): Prisma.ChannelDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.contacts`: Exposes CRUD operations for the **contacts** model.
+   * `prisma.contact`: Exposes CRUD operations for the **Contact** model.
     * Example usage:
     * ```ts
     * // Fetch zero or more Contacts
-    * const contacts = await prisma.contacts.findMany()
+    * const contacts = await prisma.contact.findMany()
     * ```
     */
-  get contacts(): Prisma.contactsDelegate<ExtArgs, { omit: OmitOpts }>;
+  get contact(): Prisma.ContactDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.tenants`: Exposes CRUD operations for the **tenants** model.
+   * `prisma.tenant`: Exposes CRUD operations for the **Tenant** model.
     * Example usage:
     * ```ts
     * // Fetch zero or more Tenants
-    * const tenants = await prisma.tenants.findMany()
+    * const tenants = await prisma.tenant.findMany()
     * ```
     */
-  get tenants(): Prisma.tenantsDelegate<ExtArgs, { omit: OmitOpts }>;
+  get tenant(): Prisma.TenantDelegate<ExtArgs, { omit: OmitOpts }>;
 
   /**
-   * `prisma.users`: Exposes CRUD operations for the **users** model.
+   * `prisma.user`: Exposes CRUD operations for the **User** model.
     * Example usage:
     * ```ts
     * // Fetch zero or more Users
-    * const users = await prisma.users.findMany()
+    * const users = await prisma.user.findMany()
     * ```
     */
-  get users(): Prisma.usersDelegate<ExtArgs, { omit: OmitOpts }>;
+  get user(): Prisma.UserDelegate<ExtArgs, { omit: OmitOpts }>;
 }
 
 export function getPrismaClientClass(): PrismaClientConstructor {

@@ -23,7 +23,7 @@ async function bootstrap() {
     .setTitle('Omni SaaS API')
     .setDescription('Documentação da API do Omni SaaS')
     .setVersion('1.0')
-    .addBearerAuth() // Adiciona suporte ao botão de "Authorize" com JWT
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

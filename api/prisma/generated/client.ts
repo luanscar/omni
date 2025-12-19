@@ -28,7 +28,7 @@ export * from "./enums"
  * ```
  * const prisma = new PrismaClient()
  * // Fetch zero or more Channels
- * const channels = await prisma.channels.findMany()
+ * const channels = await prisma.channel.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -38,22 +38,22 @@ export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts exten
 export { Prisma }
 
 /**
- * Model channels
+ * Model Channel
  * 
  */
-export type channels = Prisma.channelsModel
+export type Channel = Prisma.ChannelModel
 /**
- * Model contacts
+ * Model Contact
  * 
  */
-export type contacts = Prisma.contactsModel
+export type Contact = Prisma.ContactModel
 /**
- * Model tenants
+ * Model Tenant
  * 
  */
-export type tenants = Prisma.tenantsModel
+export type Tenant = Prisma.TenantModel
 /**
- * Model users
+ * Model User
  * 
  */
-export type users = Prisma.usersModel
+export type User = Prisma.UserModel

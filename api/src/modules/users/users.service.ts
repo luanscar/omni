@@ -6,10 +6,10 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(data: CreateUserDto) {
-    const userExists = await this.prisma.users.findUnique({
+    const userExists = await this.prisma.user.findUnique({
       where: { email: data.email },
     });
 
@@ -19,7 +19,7 @@ export class UsersService {
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    return this.prisma.users.create({
+    return this.prisma.user.create({
       data: {
         ...data,
         password: hashedPassword,
@@ -29,7 +29,7 @@ export class UsersService {
   }
 
   findAll() {
-    return this.prisma.users.findMany({
+    return this.prisma.user.findMany({
       select: {
         id: true,
         name: true,
@@ -42,17 +42,17 @@ export class UsersService {
   }
 
   async findOne(id: string) {
-    return this.prisma.users.findUnique({
+    return this.prisma.user.findUnique({
       where: { id },
       include: {
-        tenants: true,
+        tenant: true,
       },
     });
   }
 
   // Método auxiliar para o módulo de Auth (precisa retornar a senha para validar)
   async findByEmail(email: string) {
-    return this.prisma.users.findUnique({
+    return this.prisma.user.findUnique({
       where: { email },
     });
   }
@@ -65,14 +65,14 @@ export class UsersService {
       updateData.password = await bcrypt.hash(data.password, 10);
     }
 
-    return this.prisma.users.update({
+    return this.prisma.user.update({
       where: { id },
       data: updateData,
     });
   }
 
   remove(id: string) {
-    return this.prisma.users.delete({
+    return this.prisma.user.delete({
       where: { id },
     });
   }

@@ -51,10 +51,10 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  channels: 'channels',
-  contacts: 'contacts',
-  tenants: 'tenants',
-  users: 'users'
+  Channel: 'Channel',
+  Contact: 'Contact',
+  Tenant: 'Tenant',
+  User: 'User'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -73,7 +73,7 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const ChannelsScalarFieldEnum = {
+export const ChannelScalarFieldEnum = {
   id: 'id',
   name: 'name',
   type: 'type',
@@ -85,10 +85,10 @@ export const ChannelsScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type ChannelsScalarFieldEnum = (typeof ChannelsScalarFieldEnum)[keyof typeof ChannelsScalarFieldEnum]
+export type ChannelScalarFieldEnum = (typeof ChannelScalarFieldEnum)[keyof typeof ChannelScalarFieldEnum]
 
 
-export const ContactsScalarFieldEnum = {
+export const ContactScalarFieldEnum = {
   id: 'id',
   name: 'name',
   phoneNumber: 'phoneNumber',
@@ -100,10 +100,10 @@ export const ContactsScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type ContactsScalarFieldEnum = (typeof ContactsScalarFieldEnum)[keyof typeof ContactsScalarFieldEnum]
+export type ContactScalarFieldEnum = (typeof ContactScalarFieldEnum)[keyof typeof ContactScalarFieldEnum]
 
 
-export const TenantsScalarFieldEnum = {
+export const TenantScalarFieldEnum = {
   id: 'id',
   name: 'name',
   slug: 'slug',
@@ -112,10 +112,10 @@ export const TenantsScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type TenantsScalarFieldEnum = (typeof TenantsScalarFieldEnum)[keyof typeof TenantsScalarFieldEnum]
+export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
 
 
-export const UsersScalarFieldEnum = {
+export const UserScalarFieldEnum = {
   id: 'id',
   email: 'email',
   password: 'password',
@@ -128,7 +128,7 @@ export const UsersScalarFieldEnum = {
   updatedAt: 'updatedAt'
 } as const
 
-export type UsersScalarFieldEnum = (typeof UsersScalarFieldEnum)[keyof typeof UsersScalarFieldEnum]
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
 export const SortOrder = {
