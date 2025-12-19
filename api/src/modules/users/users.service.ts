@@ -1,0 +1,81 @@
+import { ConflictException, Injectable } from '@nestjs/common';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { PrismaService } from 'src/prisma.service';
+import * as bcrypt from 'bcrypt';
+
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) { }
+
+
+  async create(data: CreateUserDto) {
+    // 1. Verificar se email já existe
+    const userExists = await this.prisma.users.findUnique({
+      where: { email: data.email },
+    });
+
+    if (userExists) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(data.password, 10);
+
+    return this.prisma.users.create({
+      data: {
+        ...data,
+        password: hashedPassword,
+        tenantId: data.tenantId as string,
+      },
+    });
+  }
+
+  findAll() {
+    return this.prisma.users.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        tenantId: true,
+        active: true,
+      }
+    });
+  }
+
+  async findOne(id: string) {
+    return this.prisma.users.findUnique({
+      where: { id },
+      include: {
+        tenants: true,
+      }
+    });
+  }
+
+  // Método auxiliar para o módulo de Auth (precisa retornar a senha para validar)
+  async findByEmail(email: string) {
+    return this.prisma.users.findUnique({
+      where: { email },
+    });
+  }
+
+  async update(id: string, data: UpdateUserDto) {
+    const updateData: any = { ...data };
+
+    // Se estiver atualizando a senha, precisa hashear novamente
+    if (data.password) {
+      updateData.password = await bcrypt.hash(data.password, 10);
+    }
+
+    return this.prisma.users.update({
+      where: { id },
+      data: updateData,
+    });
+  }
+
+  remove(id: string) {
+    return this.prisma.users.delete({
+      where: { id },
+    });
+  }
+}

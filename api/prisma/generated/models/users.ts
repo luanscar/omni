@@ -289,7 +289,7 @@ export type usersScalarWhereWithAggregatesInput = {
 }
 
 export type usersCreateInput = {
-  id: string
+  id?: string
   email: string
   password: string
   name: string
@@ -297,12 +297,12 @@ export type usersCreateInput = {
   active?: boolean
   avatarUrl?: string | null
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   tenants: Prisma.tenantsCreateNestedOneWithoutUsersInput
 }
 
 export type usersUncheckedCreateInput = {
-  id: string
+  id?: string
   email: string
   password: string
   name: string
@@ -311,7 +311,7 @@ export type usersUncheckedCreateInput = {
   avatarUrl?: string | null
   tenantId: string
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type usersUpdateInput = {
@@ -341,7 +341,7 @@ export type usersUncheckedUpdateInput = {
 }
 
 export type usersCreateManyInput = {
-  id: string
+  id?: string
   email: string
   password: string
   name: string
@@ -350,7 +350,7 @@ export type usersCreateManyInput = {
   avatarUrl?: string | null
   tenantId: string
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type usersUpdateManyMutationInput = {
@@ -474,7 +474,7 @@ export type EnumUserRoleFieldUpdateOperationsInput = {
 }
 
 export type usersCreateWithoutTenantsInput = {
-  id: string
+  id?: string
   email: string
   password: string
   name: string
@@ -482,11 +482,11 @@ export type usersCreateWithoutTenantsInput = {
   active?: boolean
   avatarUrl?: string | null
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type usersUncheckedCreateWithoutTenantsInput = {
-  id: string
+  id?: string
   email: string
   password: string
   name: string
@@ -494,7 +494,7 @@ export type usersUncheckedCreateWithoutTenantsInput = {
   active?: boolean
   avatarUrl?: string | null
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type usersCreateOrConnectWithoutTenantsInput = {
@@ -540,7 +540,7 @@ export type usersScalarWhereInput = {
 }
 
 export type usersCreateManyTenantsInput = {
-  id: string
+  id?: string
   email: string
   password: string
   name: string
@@ -548,7 +548,7 @@ export type usersCreateManyTenantsInput = {
   active?: boolean
   avatarUrl?: string | null
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type usersUpdateWithoutTenantsInput = {

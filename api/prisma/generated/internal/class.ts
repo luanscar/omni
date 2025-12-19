@@ -17,10 +17,10 @@ import type * as Prisma from "./prismaNamespace"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.0.0",
-  "engineVersion": "0c19ccc313cf9911a90d99d2ac2eb0280c76c513",
+  "clientVersion": "7.2.0",
+  "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
   "activeProvider": "postgresql",
-  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel channels {\n  id         String      @id\n  name       String\n  type       ChannelType\n  identifier String?\n  token      String?\n  active     Boolean     @default(true)\n  tenantId   String\n  createdAt  DateTime    @default(now())\n  updatedAt  DateTime\n  tenants    tenants     @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n}\n\nmodel contacts {\n  id            String   @id\n  name          String\n  phoneNumber   String?\n  email         String?\n  profilePicUrl String?\n  customFields  Json?\n  tenantId      String\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime\n  tenants       tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([phoneNumber, tenantId])\n}\n\nmodel tenants {\n  id        String     @id\n  name      String\n  slug      String     @unique\n  active    Boolean    @default(true)\n  createdAt DateTime   @default(now())\n  updatedAt DateTime\n  channels  channels[]\n  contacts  contacts[]\n  users     users[]\n}\n\nmodel users {\n  id        String   @id\n  email     String   @unique\n  password  String\n  name      String\n  role      UserRole @default(AGENT)\n  active    Boolean  @default(true)\n  avatarUrl String?\n  tenantId  String\n  createdAt DateTime @default(now())\n  updatedAt DateTime\n  tenants   tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n}\n\nenum ChannelType {\n  WHATSAPP\n  INSTAGRAM\n  TELEGRAM\n  WEBCHAT\n}\n\nenum UserRole {\n  ADMIN\n  AGENT\n  MANAGER\n}\n",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"./generated\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel channels {\n  id         String      @id @default(uuid())\n  name       String\n  type       ChannelType\n  identifier String?\n  token      String?\n  active     Boolean     @default(true)\n  tenantId   String\n  createdAt  DateTime    @default(now())\n  updatedAt  DateTime    @updatedAt\n  tenants    tenants     @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n}\n\nmodel contacts {\n  id            String   @id @default(uuid())\n  name          String\n  phoneNumber   String?\n  email         String?\n  profilePicUrl String?\n  customFields  Json?\n  tenantId      String\n  createdAt     DateTime @default(now())\n  updatedAt     DateTime @updatedAt\n  tenants       tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n\n  @@index([phoneNumber, tenantId])\n}\n\nmodel tenants {\n  id        String     @id @default(uuid())\n  name      String\n  slug      String     @unique\n  active    Boolean    @default(true)\n  createdAt DateTime   @default(now())\n  updatedAt DateTime   @updatedAt\n  channels  channels[]\n  contacts  contacts[]\n  users     users[]\n}\n\nmodel users {\n  id        String   @id @default(uuid())\n  email     String   @unique\n  password  String\n  name      String\n  role      UserRole @default(AGENT)\n  active    Boolean  @default(true)\n  avatarUrl String?\n  tenantId  String\n  createdAt DateTime @default(now())\n  updatedAt DateTime @updatedAt\n  tenants   tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)\n}\n\nenum ChannelType {\n  WHATSAPP\n  INSTAGRAM\n  TELEGRAM\n  WEBCHAT\n}\n\nenum UserRole {\n  ADMIN\n  AGENT\n  MANAGER\n}\n",
   "runtimeDataModel": {
     "models": {},
     "enums": {},
@@ -62,7 +62,7 @@ export interface PrismaClientConstructor {
    * const channels = await prisma.channels.findMany()
    * ```
    * 
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+   * Read more in our [docs](https://pris.ly/d/client).
    */
 
   new <
@@ -84,7 +84,7 @@ export interface PrismaClientConstructor {
  * const channels = await prisma.channels.findMany()
  * ```
  * 
- * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client).
+ * Read more in our [docs](https://pris.ly/d/client).
  */
 
 export interface PrismaClient<
@@ -113,7 +113,7 @@ export interface PrismaClient<
    * const result = await prisma.$executeRaw`UPDATE User SET cool = ${true} WHERE email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -125,7 +125,7 @@ export interface PrismaClient<
    * const result = await prisma.$executeRawUnsafe('UPDATE User SET cool = $1 WHERE email = $2 ;', true, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $executeRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<number>;
 
@@ -136,7 +136,7 @@ export interface PrismaClient<
    * const result = await prisma.$queryRaw`SELECT * FROM User WHERE id = ${1} OR email = ${'user@email.com'};`
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRaw<T = unknown>(query: TemplateStringsArray | Prisma.Sql, ...values: any[]): Prisma.PrismaPromise<T>;
 
@@ -148,7 +148,7 @@ export interface PrismaClient<
    * const result = await prisma.$queryRawUnsafe('SELECT * FROM User WHERE id = $1 OR email = $2;', 1, 'user@email.com')
    * ```
    *
-   * Read more in our [docs](https://www.prisma.io/docs/reference/tools-and-interfaces/prisma-client/raw-database-access).
+   * Read more in our [docs](https://pris.ly/d/raw-queries).
    */
   $queryRawUnsafe<T = unknown>(query: string, ...values: any[]): Prisma.PrismaPromise<T>;
 

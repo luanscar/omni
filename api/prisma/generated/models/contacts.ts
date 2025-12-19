@@ -273,19 +273,19 @@ export type contactsScalarWhereWithAggregatesInput = {
 }
 
 export type contactsCreateInput = {
-  id: string
+  id?: string
   name: string
   phoneNumber?: string | null
   email?: string | null
   profilePicUrl?: string | null
   customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   tenants: Prisma.tenantsCreateNestedOneWithoutContactsInput
 }
 
 export type contactsUncheckedCreateInput = {
-  id: string
+  id?: string
   name: string
   phoneNumber?: string | null
   email?: string | null
@@ -293,7 +293,7 @@ export type contactsUncheckedCreateInput = {
   customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tenantId: string
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type contactsUpdateInput = {
@@ -321,7 +321,7 @@ export type contactsUncheckedUpdateInput = {
 }
 
 export type contactsCreateManyInput = {
-  id: string
+  id?: string
   name: string
   phoneNumber?: string | null
   email?: string | null
@@ -329,7 +329,7 @@ export type contactsCreateManyInput = {
   customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   tenantId: string
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type contactsUpdateManyMutationInput = {
@@ -442,25 +442,25 @@ export type contactsUncheckedUpdateManyWithoutTenantsNestedInput = {
 }
 
 export type contactsCreateWithoutTenantsInput = {
-  id: string
+  id?: string
   name: string
   phoneNumber?: string | null
   email?: string | null
   profilePicUrl?: string | null
   customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type contactsUncheckedCreateWithoutTenantsInput = {
-  id: string
+  id?: string
   name: string
   phoneNumber?: string | null
   email?: string | null
   profilePicUrl?: string | null
   customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type contactsCreateOrConnectWithoutTenantsInput = {
@@ -505,14 +505,14 @@ export type contactsScalarWhereInput = {
 }
 
 export type contactsCreateManyTenantsInput = {
-  id: string
+  id?: string
   name: string
   phoneNumber?: string | null
   email?: string | null
   profilePicUrl?: string | null
   customFields?: Prisma.NullableJsonNullValueInput | runtime.InputJsonValue
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type contactsUpdateWithoutTenantsInput = {

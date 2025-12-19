@@ -8,7 +8,7 @@ datasource db {
 }
 
 model channels {
-  id         String      @id
+  id         String      @id @default(uuid())
   name       String
   type       ChannelType
   identifier String?
@@ -16,12 +16,12 @@ model channels {
   active     Boolean     @default(true)
   tenantId   String
   createdAt  DateTime    @default(now())
-  updatedAt  DateTime
+  updatedAt  DateTime    @updatedAt
   tenants    tenants     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model contacts {
-  id            String   @id
+  id            String   @id @default(uuid())
   name          String
   phoneNumber   String?
   email         String?
@@ -29,26 +29,26 @@ model contacts {
   customFields  Json?
   tenantId      String
   createdAt     DateTime @default(now())
-  updatedAt     DateTime
+  updatedAt     DateTime @updatedAt
   tenants       tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([phoneNumber, tenantId])
 }
 
 model tenants {
-  id        String     @id
+  id        String     @id @default(uuid())
   name      String
   slug      String     @unique
   active    Boolean    @default(true)
   createdAt DateTime   @default(now())
-  updatedAt DateTime
+  updatedAt DateTime   @updatedAt
   channels  channels[]
   contacts  contacts[]
   users     users[]
 }
 
 model users {
-  id        String   @id
+  id        String   @id @default(uuid())
   email     String   @unique
   password  String
   name      String
@@ -57,7 +57,7 @@ model users {
   avatarUrl String?
   tenantId  String
   createdAt DateTime @default(now())
-  updatedAt DateTime
+  updatedAt DateTime @updatedAt
   tenants   tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 

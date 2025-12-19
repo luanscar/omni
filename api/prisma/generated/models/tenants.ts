@@ -247,24 +247,24 @@ export type tenantsScalarWhereWithAggregatesInput = {
 }
 
 export type tenantsCreateInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   channels?: Prisma.channelsCreateNestedManyWithoutTenantsInput
   contacts?: Prisma.contactsCreateNestedManyWithoutTenantsInput
   users?: Prisma.usersCreateNestedManyWithoutTenantsInput
 }
 
 export type tenantsUncheckedCreateInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   channels?: Prisma.channelsUncheckedCreateNestedManyWithoutTenantsInput
   contacts?: Prisma.contactsUncheckedCreateNestedManyWithoutTenantsInput
   users?: Prisma.usersUncheckedCreateNestedManyWithoutTenantsInput
@@ -295,12 +295,12 @@ export type tenantsUncheckedUpdateInput = {
 }
 
 export type tenantsCreateManyInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type tenantsUpdateManyMutationInput = {
@@ -396,23 +396,23 @@ export type tenantsUpdateOneRequiredWithoutUsersNestedInput = {
 }
 
 export type tenantsCreateWithoutChannelsInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   contacts?: Prisma.contactsCreateNestedManyWithoutTenantsInput
   users?: Prisma.usersCreateNestedManyWithoutTenantsInput
 }
 
 export type tenantsUncheckedCreateWithoutChannelsInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   contacts?: Prisma.contactsUncheckedCreateNestedManyWithoutTenantsInput
   users?: Prisma.usersUncheckedCreateNestedManyWithoutTenantsInput
 }
@@ -456,23 +456,23 @@ export type tenantsUncheckedUpdateWithoutChannelsInput = {
 }
 
 export type tenantsCreateWithoutContactsInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   channels?: Prisma.channelsCreateNestedManyWithoutTenantsInput
   users?: Prisma.usersCreateNestedManyWithoutTenantsInput
 }
 
 export type tenantsUncheckedCreateWithoutContactsInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   channels?: Prisma.channelsUncheckedCreateNestedManyWithoutTenantsInput
   users?: Prisma.usersUncheckedCreateNestedManyWithoutTenantsInput
 }
@@ -516,23 +516,23 @@ export type tenantsUncheckedUpdateWithoutContactsInput = {
 }
 
 export type tenantsCreateWithoutUsersInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   channels?: Prisma.channelsCreateNestedManyWithoutTenantsInput
   contacts?: Prisma.contactsCreateNestedManyWithoutTenantsInput
 }
 
 export type tenantsUncheckedCreateWithoutUsersInput = {
-  id: string
+  id?: string
   name: string
   slug: string
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   channels?: Prisma.channelsUncheckedCreateNestedManyWithoutTenantsInput
   contacts?: Prisma.contactsUncheckedCreateNestedManyWithoutTenantsInput
 }

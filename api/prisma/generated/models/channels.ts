@@ -277,19 +277,19 @@ export type channelsScalarWhereWithAggregatesInput = {
 }
 
 export type channelsCreateInput = {
-  id: string
+  id?: string
   name: string
   type: $Enums.ChannelType
   identifier?: string | null
   token?: string | null
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
   tenants: Prisma.tenantsCreateNestedOneWithoutChannelsInput
 }
 
 export type channelsUncheckedCreateInput = {
-  id: string
+  id?: string
   name: string
   type: $Enums.ChannelType
   identifier?: string | null
@@ -297,7 +297,7 @@ export type channelsUncheckedCreateInput = {
   active?: boolean
   tenantId: string
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type channelsUpdateInput = {
@@ -325,7 +325,7 @@ export type channelsUncheckedUpdateInput = {
 }
 
 export type channelsCreateManyInput = {
-  id: string
+  id?: string
   name: string
   type: $Enums.ChannelType
   identifier?: string | null
@@ -333,7 +333,7 @@ export type channelsCreateManyInput = {
   active?: boolean
   tenantId: string
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type channelsUpdateManyMutationInput = {
@@ -468,25 +468,25 @@ export type channelsUncheckedUpdateManyWithoutTenantsNestedInput = {
 }
 
 export type channelsCreateWithoutTenantsInput = {
-  id: string
+  id?: string
   name: string
   type: $Enums.ChannelType
   identifier?: string | null
   token?: string | null
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type channelsUncheckedCreateWithoutTenantsInput = {
-  id: string
+  id?: string
   name: string
   type: $Enums.ChannelType
   identifier?: string | null
   token?: string | null
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type channelsCreateOrConnectWithoutTenantsInput = {
@@ -531,14 +531,14 @@ export type channelsScalarWhereInput = {
 }
 
 export type channelsCreateManyTenantsInput = {
-  id: string
+  id?: string
   name: string
   type: $Enums.ChannelType
   identifier?: string | null
   token?: string | null
   active?: boolean
   createdAt?: Date | string
-  updatedAt: Date | string
+  updatedAt?: Date | string
 }
 
 export type channelsUpdateWithoutTenantsInput = {
