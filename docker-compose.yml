@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: omni_postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: omni
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
+  localstack:
+    image: localstack/localstack
+    container_name: omni_localstack
+    ports:
+      - "4566:4566"            # Gateway padrão do LocalStack
+    environment:
+      - SERVICES=s3            # Ativa apenas o serviço S3
+      - DEBUG=1                # Ajuda a debugar problemas de conexão se necessário
+      - DEFAULT_REGION=us-east-1
+      - DATA_DIR=/var/lib/localstack/persistence # Persistência de dados
+    volumes:
+      - localstack_data:/var/lib/localstack
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    restart: always
+
+  # Descomente abaixo se quiser uma interface visual para o banco
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: omni_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
+  localstack_data:

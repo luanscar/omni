@@ -1,27 +1,75 @@
 generator client {
-  provider   = "prisma-client"
-  output     = "./generated"
+  provider = "prisma-client"
+  output   = "./generated"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id    Int     @id @default(autoincrement())
-  email String  @unique
-  name  String?
-  posts Post[]
+model channels {
+  id         String      @id
+  name       String
+  type       ChannelType
+  identifier String?
+  token      String?
+  active     Boolean     @default(true)
+  tenantId   String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime
+  tenants    tenants     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
+model contacts {
+  id            String   @id
+  name          String
+  phoneNumber   String?
+  email         String?
+  profilePicUrl String?
+  customFields  Json?
+  tenantId      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  tenants       tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([phoneNumber, tenantId])
+}
+
+model tenants {
+  id        String     @id
+  name      String
+  slug      String     @unique
+  active    Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  channels  channels[]
+  contacts  contacts[]
+  users     users[]
+}
+
+model users {
+  id        String   @id
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(AGENT)
+  active    Boolean  @default(true)
+  avatarUrl String?
+  tenantId  String
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  viewCount Int      @default(0)
-  author    User?    @relation(fields: [authorId], references: [id])
-  authorId  Int?
+  updatedAt DateTime
+  tenants   tenants  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+enum ChannelType {
+  WHATSAPP
+  INSTAGRAM
+  TELEGRAM
+  WEBCHAT
+}
+
+enum UserRole {
+  ADMIN
+  AGENT
+  MANAGER
 }
