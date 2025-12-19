@@ -1,12 +1,23 @@
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
-export class LoginDto {
-    @IsEmail({}, { message: 'O email fornecido é inválido' })
-    @IsNotEmpty({ message: 'O email não pode estar vazio' })
-    email: string;
+import { ApiProperty } from '@nestjs/swagger';
 
-    @IsString({ message: 'A senha deve ser uma string' })
-    @IsNotEmpty({ message: 'A senha não pode estar vazia' })
-    @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
-    password: string;
+export class LoginDto {
+  @ApiProperty({
+    example: 'admin@example.com',
+    description: 'Email do usuário',
+  })
+  @IsEmail({}, { message: 'O email fornecido é inválido' })
+  @IsNotEmpty({ message: 'O email não pode estar vazio' })
+  email: string;
+
+  @ApiProperty({
+    example: '123456',
+    description: 'Senha do usuário',
+    minLength: 6,
+  })
+  @IsString({ message: 'A senha deve ser uma string' })
+  @IsNotEmpty({ message: 'A senha não pode estar vazia' })
+  @MinLength(6, { message: 'A senha deve ter no mínimo 6 caracteres' })
+  password: string;
 }

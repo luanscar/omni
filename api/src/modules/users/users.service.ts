@@ -6,17 +6,15 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) { }
-
+  constructor(private prisma: PrismaService) {}
 
   async create(data: CreateUserDto) {
-    // 1. Verificar se email já existe
     const userExists = await this.prisma.users.findUnique({
       where: { email: data.email },
     });
 
     if (userExists) {
-      throw new ConflictException('User with this email already exists');
+      throw new ConflictException('Usuário com este e-mail já existe');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -39,7 +37,7 @@ export class UsersService {
         role: true,
         tenantId: true,
         active: true,
-      }
+      },
     });
   }
 
@@ -48,7 +46,7 @@ export class UsersService {
       where: { id },
       include: {
         tenants: true,
-      }
+      },
     });
   }
 

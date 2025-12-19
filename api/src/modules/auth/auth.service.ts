@@ -15,14 +15,14 @@ export class AuthService {
   constructor(
     private usersService: UsersService,
     private jwtService: JwtService,
-  ) { }
-
+  ) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     const user = await this.usersService.findByEmail(email);
 
     // Verifica se usuário existe e se a senha bate
     if (user && (await bcrypt.compare(password, user.password))) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
       return result;
     }
@@ -41,7 +41,7 @@ export class AuthService {
       email: user.email,
       sub: user.id,
       tenantId: user.tenantId,
-      role: user.role
+      role: user.role,
     };
 
     return {
@@ -51,8 +51,8 @@ export class AuthService {
         name: user.name,
         email: user.email,
         role: user.role,
-        tenantId: user.tenantId
-      }
+        tenantId: user.tenantId,
+      },
     };
   }
 }

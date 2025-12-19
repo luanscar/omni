@@ -1,5 +1,5 @@
-import { Module } from '@nestjs/common'
-import { PrismaService } from './prisma.service'
+import { Module } from '@nestjs/common';
+import { PrismaService } from './prisma.service';
 import { UsersModule } from './modules/users/users.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { AuthModule } from './modules/auth/auth.module';
@@ -10,7 +10,8 @@ import { RolesGuard } from './modules/auth/roles.guard';
 @Module({
   imports: [UsersModule, TenantsModule, AuthModule],
   controllers: [],
-  providers: [PrismaService,
+  providers: [
+    PrismaService,
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -21,4 +22,4 @@ import { RolesGuard } from './modules/auth/roles.guard';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
