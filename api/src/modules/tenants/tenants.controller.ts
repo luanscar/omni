@@ -12,8 +12,6 @@ import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { CurrentUser } from 'src/common/decorators/current-user.decorator';
-import { User } from '../users/entities/user.entity';
 
 @ApiTags('Tenants')
 @ApiBearerAuth()
@@ -25,8 +23,7 @@ export class TenantsController {
   @ApiOperation({ summary: 'Criar um novo Tenant (Empresa)' })
   @ApiResponse({ status: 201, description: 'Tenant criado com sucesso.' })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
-  create(@Body() createTenantDto: CreateTenantDto, @CurrentUser() user: User) {
-    console.log(user);
+  create(@Body() createTenantDto: CreateTenantDto) {
     return this.tenantsService.create(createTenantDto);
   }
 

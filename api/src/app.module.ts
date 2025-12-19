@@ -6,9 +6,12 @@ import { AuthModule } from './modules/auth/auth.module';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtAuthGuard } from './modules/auth/jwt-auth.guard';
 import { RolesGuard } from './modules/auth/roles.guard';
+import { ChannelsModule } from './modules/channels/channels.module';
+import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
+import { TeamsModule } from './modules/teams/teams.module';
 
 @Module({
-  imports: [UsersModule, TenantsModule, AuthModule],
+  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule],
   controllers: [],
   providers: [
     PrismaService,
@@ -22,4 +25,4 @@ import { RolesGuard } from './modules/auth/roles.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

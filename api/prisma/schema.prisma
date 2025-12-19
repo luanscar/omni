@@ -7,6 +7,22 @@ datasource db {
   provider = "postgresql"
 }
 
+model Team {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  users User[] @relation("TeamMembers")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teams")
+}
+
 model Channel {
   id         String      @id @default(uuid())
   name       String
@@ -48,6 +64,7 @@ model Tenant {
   channels  Channel[]
   contacts  Contact[]
   users     User[]
+  teams     Team[]
 
   @@map("tenants")
 }
@@ -64,6 +81,7 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  teams     Team[]   @relation("TeamMembers")
 
   @@map("users")
 }
