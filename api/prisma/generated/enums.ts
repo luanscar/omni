@@ -34,3 +34,21 @@ export const TeamRole = {
 } as const
 
 export type TeamRole = (typeof TeamRole)[keyof typeof TeamRole]
+
+
+export const ConversationStatus = {
+  OPEN: 'OPEN',
+  CLOSED: 'CLOSED',
+  PENDING: 'PENDING'
+} as const
+
+export type ConversationStatus = (typeof ConversationStatus)[keyof typeof ConversationStatus]
+
+
+export const MessageSenderType = {
+  USER: 'USER',
+  CONTACT: 'CONTACT',
+  SYSTEM: 'SYSTEM'
+} as const
+
+export type MessageSenderType = (typeof MessageSenderType)[keyof typeof MessageSenderType]

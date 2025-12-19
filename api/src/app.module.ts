@@ -11,9 +11,11 @@ import { WhatsappModule } from './modules/whatsapp/whatsapp.module';
 import { TeamsModule } from './modules/teams/teams.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { StorageModule } from './modules/storage/storage.module';
+import { ConversationsModule } from './modules/conversations/conversations.module';
+import { MessagesModule } from './modules/messages/messages.module';
 
 @Module({
-  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule, StorageModule],
+  imports: [UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule, StorageModule, ConversationsModule, MessagesModule],
   controllers: [],
   providers: [
     PrismaService,
