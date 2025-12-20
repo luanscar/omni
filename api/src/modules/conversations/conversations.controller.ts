@@ -15,9 +15,12 @@ export class ConversationsController {
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
-  @ApiOperation({ summary: 'Iniciar uma nova conversa (Atendimento ou Chat Interno)' })
-  @ApiResponse({ status: 201, description: 'Conversa criada ou recuperada com sucesso.', type: Conversation })
-  @ApiResponse({ status: 400, description: 'Dados inválidos.' })
+  @ApiOperation({
+    summary: 'Criar nova conversa',
+    description: 'Inicia conversa de atendimento (com contactId e channelId) ou chat interno (com teamId). Se já existir conversa aberta para o contato, retorna a existente.'
+  })
+  @ApiResponse({ status: 201, description: 'Conversa criada ou recuperada.', type: Conversation })
+  @ApiResponse({ status: 400, description: 'Falta contactId/teamId ou ambos foram fornecidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
   create(@Body() createConversationDto: CreateConversationDto, @Request() req) {
@@ -26,9 +29,12 @@ export class ConversationsController {
 
   @Get()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
-  @ApiOperation({ summary: 'Listar conversas' })
-  @ApiQuery({ name: 'status', enum: ConversationStatus, required: false, description: 'Filtrar por status' })
-  @ApiResponse({ status: 200, description: 'Lista retornada.', type: [Conversation] })
+  @ApiOperation({
+    summary: 'Listar conversas',
+    description: 'Lista conversas ordenadas por atualização. Inclui última mensagem, contato, agente atribuído e contador de mensagens.'
+  })
+  @ApiQuery({ name: 'status', enum: ConversationStatus, required: false, description: 'Filtrar por status: OPEN, PENDING ou CLOSED' })
+  @ApiResponse({ status: 200, description: 'Lista com última mensagem, contato, agente e contador.', type: [Conversation] })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
   findAll(@Query('status') status: ConversationStatus, @Request() req) {
@@ -48,7 +54,10 @@ export class ConversationsController {
 
   @Patch(':id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
-  @ApiOperation({ summary: 'Atualizar status ou transferir conversa' })
+  @ApiOperation({
+    summary: 'Atualizar conversa',
+    description: 'Altera status (OPEN/PENDING/CLOSED) ou transfere para outro agente (assigneeId).'
+  })
   @ApiResponse({ status: 200, description: 'Conversa atualizada.', type: Conversation })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })

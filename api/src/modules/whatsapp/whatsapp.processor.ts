@@ -32,6 +32,13 @@ export class WhatsappProcessor {
 
         this.logger.debug(`Processing message type: ${getContentType(message.message)} from ${remoteJid} | fromMe: ${isFromMe}`);
 
+        // Ignorar reações - não são mensagens tradicionais
+        const messageType = getContentType(message.message);
+        if (messageType === 'reactionMessage') {
+            this.logger.debug(`Ignoring reaction message`);
+            return;
+        }
+
         // Mensagens enviadas pelo sistema (fromMe) já foram salvas pelo messages.service com o userId correto
         // Aqui processamos apenas mensagens RECEBIDAS de contatos
         if (isFromMe) {
@@ -40,7 +47,7 @@ export class WhatsappProcessor {
         }
 
         try {
-            const { content, mediaId } = await this.extractMessageContent(message, tenantId);
+            const { content, mediaId, metadata } = await this.extractMessageContent(message, tenantId);
 
             if (!content && !mediaId) {
                 this.logger.warn(`Skipping message ${message.key.id}: No content extracted.`);
@@ -95,6 +102,7 @@ export class WhatsappProcessor {
                     providerId: message.key.id,
                     content: content,
                     mediaId: mediaId,
+                    metadata: metadata,
                     senderType: MessageSenderType.CONTACT,
                     senderContactId: contact.id,
                     quotedMessageId: quotedMessageId,
@@ -121,13 +129,22 @@ export class WhatsappProcessor {
 
     // --- MÉTODOS AUXILIARES ---
 
-    private async extractMessageContent(message: WAMessage, tenantId: string): Promise<{ content: string | null, mediaId: string | null }> {
+    private async extractMessageContent(message: WAMessage, tenantId: string): Promise<{ content: string | null, mediaId: string | null, metadata: any }> {
         const msg = message.message;
-        if (!msg) return { content: null, mediaId: null };
+        if (!msg) return { content: null, mediaId: null, metadata: null };
 
         const type = getContentType(msg);
         let content: string | null = null;
         let mediaId: string | null = null;
+
+        // Salvar TODA a mensagem original do Baileys no metadata
+        const metadata = {
+            messageType: type,
+            rawMessage: msg,
+            messageKey: message.key,
+            pushName: message.pushName,
+            timestamp: message.messageTimestamp
+        };
 
         try {
             switch (type) {
@@ -165,12 +182,13 @@ export class WhatsappProcessor {
                     break;
 
                 case 'contactMessage':
-                    content = `[Contato]: ${msg.contactMessage.displayName}`;
+                    const contactMsg = msg.contactMessage;
+                    content = `[Contato]: ${contactMsg.displayName}`;
                     break;
 
                 case 'locationMessage':
-                    const { degreesLatitude, degreesLongitude, address } = msg.locationMessage;
-                    content = `[Localização]: ${address || ''} (${degreesLatitude}, ${degreesLongitude})`;
+                    const { degreesLatitude, degreesLongitude, address, name } = msg.locationMessage;
+                    content = `[Localização]: ${address || name || ''} (${degreesLatitude}, ${degreesLongitude})`;
                     break;
 
                 case 'reactionMessage':
@@ -186,7 +204,7 @@ export class WhatsappProcessor {
             content = `[Erro ao baixar mídia]`;
         }
 
-        return { content, mediaId };
+        return { content, mediaId, metadata };
     }
 
     private async downloadAndSaveMedia(message: WAMessage, type: 'image' | 'video' | 'audio' | 'document' | 'sticker', tenantId: string): Promise<string | null> {

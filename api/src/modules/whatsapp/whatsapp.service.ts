@@ -24,6 +24,7 @@ export interface SendMessageOptions {
   contact?: any;
   reaction?: any;
   replyToProviderId?: string;
+  tenantId?: string; // Necessário para buscar mídia do tenant correto
 }
 
 @Injectable()
@@ -75,7 +76,7 @@ export class WhatsappService implements OnModuleInit {
       case MessageType.STICKER:
         if (!options.mediaId) throw new Error('MediaID é obrigatório para envio de mídia.');
 
-        const mediaInfo = await this.storageService.getDownloadUrl(options.mediaId, 'SYSTEM');
+        const mediaInfo = await this.storageService.getDownloadUrl(options.mediaId, options.tenantId || 'SYSTEM');
         const mediaObj = { url: mediaInfo.url };
 
         if (options.type === MessageType.IMAGE) {

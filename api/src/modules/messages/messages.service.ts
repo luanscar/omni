@@ -14,7 +14,7 @@ export class MessagesService {
   ) { }
 
   async create(createMessageDto: CreateMessageDto, tenantId: string, userId: string) {
-    const { conversationId, type, content, mediaId, location, contact, reaction, replyToId } = createMessageDto;
+    const { conversationId, type, content, mediaId, location, contact, reaction, replyToId, signMessage } = createMessageDto;
 
     // 1. Verificar conversa e permissão
     const conversation = await this.prisma.conversation.findFirst({
@@ -38,18 +38,80 @@ export class MessagesService {
       }
     }
 
-    // 3. Montar Metadados (Metadata JSON)
+    // 3. Adicionar assinatura ao conteúdo se solicitado
+    let finalContent = content;
+    if (signMessage && content) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { name: true }
+      });
+
+      if (user) {
+        finalContent = `*${user.name}:*\n${content}`;
+      }
+    }
+
+    // 4. Montar Metadados (Metadata JSON)
     let metadata: any = null;
     if (type === MessageType.LOCATION) metadata = location;
     if (type === MessageType.CONTACT) metadata = contact;
     if (type === MessageType.REACTION) metadata = reaction;
 
-    // 4. Salvar Mensagem no Banco (Estado "Enviando")
+    // 4.5. Tratamento especial para REAÇÕES
+    // Reações não são mensagens tradicionais, apenas eventos efêmeros
+    if (type === MessageType.REACTION) {
+      if (!conversation.contactId || !conversation.channelId || conversation.channel.type !== 'WHATSAPP') {
+        throw new BadRequestException('Reações só podem ser enviadas em conversas do WhatsApp.');
+      }
+
+      if (!reaction || !reaction.key) {
+        throw new BadRequestException('Dados da reação são obrigatórios.');
+      }
+
+      // Buscar o providerId da mensagem alvo
+      const targetMessage = await this.prisma.message.findUnique({
+        where: { id: reaction.key },
+        select: { providerId: true }
+      });
+
+      if (!targetMessage || !targetMessage.providerId) {
+        throw new BadRequestException('Mensagem alvo da reação não encontrada ou não possui providerId.');
+      }
+
+      // Enviar reação diretamente para o WhatsApp (sem salvar no banco)
+      try {
+        await this.whatsappService.sendMessage(conversation.channelId, {
+          to: conversation.contact.phoneNumber,
+          type: MessageType.REACTION,
+          reaction: {
+            text: reaction.text,
+            key: targetMessage.providerId
+          },
+          tenantId: tenantId
+        });
+
+        // Retornar resposta sem salvar no banco
+        return {
+          id: null,
+          type: MessageType.REACTION,
+          content: `Reação ${reaction.text} enviada`,
+          conversationId,
+          senderType: MessageSenderType.USER,
+          senderUserId: userId,
+          metadata: reaction,
+          createdAt: new Date()
+        };
+      } catch (error) {
+        throw new BadRequestException(`Erro ao enviar reação: ${error.message}`);
+      }
+    }
+
+    // 5. Salvar Mensagem no Banco (Estado "Enviando")
     const message = await this.prisma.message.create({
       data: {
         conversationId,
         type,
-        content,
+        content: finalContent, // Usa o conteúdo com assinatura se aplicável
         mediaId,
         metadata,
         quotedMessageId: replyToId,
@@ -64,7 +126,7 @@ export class MessagesService {
       }
     });
 
-    // 5. Integração com WhatsApp (Baileys)
+    // 6. Integração com WhatsApp (Baileys)
     // Só enviamos se for uma conversa externa (tem contato e canal WhatsApp)
     if (conversation.contactId && conversation.channelId && conversation.channel.type === 'WHATSAPP') {
       try {
@@ -72,16 +134,17 @@ export class MessagesService {
         const providerId = await this.whatsappService.sendMessage(conversation.channelId, {
           to: conversation.contact.phoneNumber,
           type: type,
-          content: content,
+          content: finalContent, // Usa finalContent que inclui assinatura se aplicável
           mediaId: mediaId,
           location: location,
           contact: contact,
-          reaction: reaction,
+          reaction: null, // Reações já foram tratadas acima
+          tenantId: tenantId, // Passa tenantId para buscar mídia corretamente
           // Passamos o ID original da mensagem do WhatsApp para fazer o Reply
           replyToProviderId: quotedMessage?.providerId
         });
 
-        // 6. Atualizar a mensagem com o ID real do provedor
+        // 7. Atualizar a mensagem com o ID real do provedor
         if (providerId) {
           await this.prisma.message.update({
             where: { id: message.id },
