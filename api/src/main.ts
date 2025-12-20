@@ -14,7 +14,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter({
-      logger: false, // Pode mudar para true se quiser logs detalhados do Fastify
+      logger: false,
     }),
   );
 
@@ -22,7 +22,7 @@ async function bootstrap() {
 
   await app.register(multipart, {
     limits: {
-      fileSize: 5 * 1024 * 1024, // Limite de 5MB por arquivo (ajuste conforme necessário)
+      fileSize: 5 * 1024 * 1024,
     },
   });
 
@@ -49,7 +49,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
   app.enableShutdownHooks();
-  await app.listen(3000);
+  await app.listen(3000, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Docs available on: ${await app.getUrl()}/reference`);
 }

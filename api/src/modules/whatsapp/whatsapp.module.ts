@@ -15,6 +15,6 @@ import { StorageModule } from '../storage/storage.module';
   ],
   controllers: [WhatsappController],
   providers: [WhatsappService, WhatsappProcessor, PrismaService,],
-  exports: [WhatsappService],
+  exports: [WhatsappService, BullModule],
 })
 export class WhatsappModule { }

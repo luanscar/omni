@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { PrismaService } from 'src/prisma.service';
@@ -13,7 +13,7 @@ export class TenantsService {
     });
 
     if (existing) {
-      throw new Error('Tenant with this slug already exists');
+      throw new ConflictException('Tenant with this slug already exists');
     }
 
     return this.prisma.tenant.create({

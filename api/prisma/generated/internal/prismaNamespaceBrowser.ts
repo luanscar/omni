@@ -51,15 +51,15 @@ export const AnyNull = runtime.AnyNull
 
 
 export const ModelName = {
-  Conversation: 'Conversation',
-  Message: 'Message',
-  TeamMember: 'TeamMember',
-  Team: 'Team',
+  Tenant: 'Tenant',
+  User: 'User',
   Channel: 'Channel',
   Contact: 'Contact',
-  Tenant: 'Tenant',
+  Team: 'Team',
+  TeamMember: 'TeamMember',
   Media: 'Media',
-  User: 'User'
+  Conversation: 'Conversation',
+  Message: 'Message'
 } as const
 
 export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -78,59 +78,32 @@ export const TransactionIsolationLevel = {
 export type TransactionIsolationLevel = (typeof TransactionIsolationLevel)[keyof typeof TransactionIsolationLevel]
 
 
-export const ConversationScalarFieldEnum = {
-  id: 'id',
-  sequenceId: 'sequenceId',
-  tenantId: 'tenantId',
-  contactId: 'contactId',
-  channelId: 'channelId',
-  teamId: 'teamId',
-  assigneeId: 'assigneeId',
-  status: 'status',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
-
-
-export const MessageScalarFieldEnum = {
-  id: 'id',
-  content: 'content',
-  conversationId: 'conversationId',
-  senderType: 'senderType',
-  senderUserId: 'senderUserId',
-  senderContactId: 'senderContactId',
-  mediaId: 'mediaId',
-  read: 'read',
-  createdAt: 'createdAt'
-} as const
-
-export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
-
-
-export const TeamMemberScalarFieldEnum = {
-  id: 'id',
-  teamId: 'teamId',
-  userId: 'userId',
-  role: 'role',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-} as const
-
-export type TeamMemberScalarFieldEnum = (typeof TeamMemberScalarFieldEnum)[keyof typeof TeamMemberScalarFieldEnum]
-
-
-export const TeamScalarFieldEnum = {
+export const TenantScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  description: 'description',
+  slug: 'slug',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+
+
+export const UserScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  password: 'password',
+  name: 'name',
+  role: 'role',
+  active: 'active',
+  avatarUrl: 'avatarUrl',
   tenantId: 'tenantId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type TeamScalarFieldEnum = (typeof TeamScalarFieldEnum)[keyof typeof TeamScalarFieldEnum]
+export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
 export const ChannelScalarFieldEnum = {
@@ -163,16 +136,28 @@ export const ContactScalarFieldEnum = {
 export type ContactScalarFieldEnum = (typeof ContactScalarFieldEnum)[keyof typeof ContactScalarFieldEnum]
 
 
-export const TenantScalarFieldEnum = {
+export const TeamScalarFieldEnum = {
   id: 'id',
   name: 'name',
-  slug: 'slug',
-  active: 'active',
+  description: 'description',
+  tenantId: 'tenantId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+export type TeamScalarFieldEnum = (typeof TeamScalarFieldEnum)[keyof typeof TeamScalarFieldEnum]
+
+
+export const TeamMemberScalarFieldEnum = {
+  id: 'id',
+  teamId: 'teamId',
+  userId: 'userId',
+  role: 'role',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type TeamMemberScalarFieldEnum = (typeof TeamMemberScalarFieldEnum)[keyof typeof TeamMemberScalarFieldEnum]
 
 
 export const MediaScalarFieldEnum = {
@@ -191,20 +176,39 @@ export const MediaScalarFieldEnum = {
 export type MediaScalarFieldEnum = (typeof MediaScalarFieldEnum)[keyof typeof MediaScalarFieldEnum]
 
 
-export const UserScalarFieldEnum = {
+export const ConversationScalarFieldEnum = {
   id: 'id',
-  email: 'email',
-  password: 'password',
-  name: 'name',
-  role: 'role',
-  active: 'active',
-  avatarUrl: 'avatarUrl',
+  sequenceId: 'sequenceId',
   tenantId: 'tenantId',
+  contactId: 'contactId',
+  channelId: 'channelId',
+  teamId: 'teamId',
+  assigneeId: 'assigneeId',
+  status: 'status',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
-export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
+export type ConversationScalarFieldEnum = (typeof ConversationScalarFieldEnum)[keyof typeof ConversationScalarFieldEnum]
+
+
+export const MessageScalarFieldEnum = {
+  id: 'id',
+  providerId: 'providerId',
+  type: 'type',
+  content: 'content',
+  metadata: 'metadata',
+  conversationId: 'conversationId',
+  senderType: 'senderType',
+  senderUserId: 'senderUserId',
+  senderContactId: 'senderContactId',
+  mediaId: 'mediaId',
+  quotedMessageId: 'quotedMessageId',
+  read: 'read',
+  createdAt: 'createdAt'
+} as const
+
+export type MessageScalarFieldEnum = (typeof MessageScalarFieldEnum)[keyof typeof MessageScalarFieldEnum]
 
 
 export const SortOrder = {

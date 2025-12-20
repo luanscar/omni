@@ -7,193 +7,6 @@ datasource db {
   provider = "postgresql"
 }
 
-model Conversation {
-  id         String @id @default(uuid())
-  sequenceId Int    @default(autoincrement()) // ID numérico amigável (Ticket #123)
-
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  // -- Conversa Externa (Atendimento) --
-  contactId String?
-  contact   Contact? @relation(fields: [contactId], references: [id])
-
-  channelId String?
-  channel   Channel? @relation(fields: [channelId], references: [id])
-
-  // -- Conversa Interna (Time) --
-  teamId String?
-  team   Team?   @relation(fields: [teamId], references: [id])
-
-  // Responsável (Agente)
-  assigneeId String?
-  assignee   User?   @relation("AssignedAgent", fields: [assigneeId], references: [id])
-
-  status ConversationStatus @default(OPEN)
-
-  messages Message[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@map("conversations")
-}
-
-model Message {
-  id      String  @id @default(uuid())
-  content String? // Pode ser nulo se for apenas mídia
-
-  conversationId String
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  senderType MessageSenderType
-
-  // Quem enviou? (User ou Contact)
-  senderUserId String?
-  senderUser   User?   @relation(fields: [senderUserId], references: [id])
-
-  senderContactId String?
-  senderContact   Contact? @relation(fields: [senderContactId], references: [id])
-
-  // Anexo de mídia
-  mediaId String?
-  media   Media?  @relation(fields: [mediaId], references: [id])
-
-  read      Boolean  @default(false)
-  createdAt DateTime @default(now())
-
-  @@map("messages")
-}
-
-model TeamMember {
-  id String @id @default(uuid())
-
-  teamId String
-  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  role TeamRole @default(MEMBER) // Papel ESPECÍFICO do time
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([teamId, userId]) // Um usuário só pode estar uma vez no mesmo time
-  @@map("team_members")
-}
-
-model Team {
-  id          String  @id @default(uuid())
-  name        String
-  description String?
-
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  members TeamMember[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  conversations Conversation[]
-
-  @@map("teams")
-}
-
-model Channel {
-  id            String         @id @default(uuid())
-  name          String
-  type          ChannelType
-  identifier    String?
-  token         String?
-  active        Boolean        @default(true)
-  tenantId      String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  conversations Conversation[]
-
-  @@map("channels")
-}
-
-model Contact {
-  id            String         @id @default(uuid())
-  name          String
-  phoneNumber   String?
-  email         String?
-  profilePicUrl String?
-  customFields  Json?
-  tenantId      String
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  conversations Conversation[]
-  messages      Message[]
-
-  @@index([phoneNumber, tenantId])
-  @@map("contacts")
-}
-
-model Tenant {
-  id            String         @id @default(uuid())
-  name          String
-  slug          String         @unique
-  active        Boolean        @default(true)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  channels      Channel[]
-  contacts      Contact[]
-  users         User[]
-  teams         Team[]
-  medias        Media[]
-  conversations Conversation[]
-
-  @@map("tenants")
-}
-
-model Media {
-  id           String  @id @default(uuid())
-  fileName     String // Nome salvo no bucket (geralmente um UUID)
-  originalName String // Nome original do arquivo (ex: relatorio.pdf)
-  mimeType     String // ex: application/pdf, image/png
-  size         Int // Tamanho em bytes
-  key          String // Caminho/Chave no S3
-  publicUrl    String? // URL pública (se o bucket for público)
-
-  tenantId String
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  uploaderId String?
-  uploader   User?   @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
-
-  createdAt DateTime @default(now())
-
-  messages Message[]
-
-  @@map("medias")
-}
-
-model User {
-  id                    String         @id @default(uuid())
-  email                 String         @unique
-  password              String
-  name                  String
-  role                  UserRole       @default(AGENT)
-  active                Boolean        @default(true)
-  avatarUrl             String?
-  tenantId              String
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
-  tenant                Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  teamMemberships       TeamMember[]
-  uploadedMedias        Media[]
-  assignedConversations Conversation[] @relation("AssignedAgent")
-  sentMessages          Message[]
-
-  @@map("users")
-}
-
 enum ChannelType {
   WHATSAPP
   INSTAGRAM
@@ -222,4 +35,229 @@ enum MessageSenderType {
   USER
   CONTACT
   SYSTEM
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  DOCUMENT
+  LOCATION
+  CONTACT
+  STICKER
+  REACTION
+}
+
+// --- CORE SAAS MODELS ---
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users         User[]
+  contacts      Contact[]
+  channels      Channel[]
+  teams         Team[]
+  medias        Media[]
+  conversations Conversation[]
+
+  @@map("tenants")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      UserRole @default(AGENT)
+  active    Boolean  @default(true)
+  avatarUrl String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  teamMemberships TeamMember[]
+  uploadedMedias  Media[]
+
+  assignedConversations Conversation[] @relation("AssignedAgent")
+  sentMessages          Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+// --- OMNI CHANNEL MODELS ---
+
+model Channel {
+  id         String      @id @default(uuid())
+  name       String
+  type       ChannelType
+  identifier String?
+  token      String?
+  active     Boolean     @default(true)
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("channels")
+}
+
+model Contact {
+  id            String  @id @default(uuid())
+  name          String
+  phoneNumber   String?
+  email         String?
+  profilePicUrl String?
+  customFields  Json?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  conversations Conversation[]
+  messages      Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phoneNumber, tenantId])
+  @@map("contacts")
+}
+
+// --- TEAMS MODEL ---
+
+model Team {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  members       TeamMember[]
+  conversations Conversation[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id String @id @default(uuid())
+
+  teamId String
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  role TeamRole @default(MEMBER)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([teamId, userId])
+  @@map("team_members")
+}
+
+// --- MEDIA / STORAGE MODEL ---
+
+model Media {
+  id           String  @id @default(uuid())
+  fileName     String
+  originalName String
+  mimeType     String
+  size         Int
+  key          String
+  publicUrl    String?
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  uploaderId String?
+  uploader   User?   @relation(fields: [uploaderId], references: [id], onDelete: SetNull)
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+
+  @@map("medias")
+}
+
+// --- CORE MESSAGING MODELS ---
+
+model Conversation {
+  id         String @id @default(uuid())
+  sequenceId Int    @default(autoincrement())
+
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id])
+
+  channelId String?
+  channel   Channel? @relation(fields: [channelId], references: [id])
+
+  teamId String?
+  team   Team?   @relation(fields: [teamId], references: [id])
+
+  assigneeId String?
+  assignee   User?   @relation("AssignedAgent", fields: [assigneeId], references: [id])
+
+  status ConversationStatus @default(OPEN)
+
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("conversations")
+}
+
+model Message {
+  id String @id @default(uuid())
+
+  // ID da mensagem na plataforma externa (Ex: wamid.HBgL...)
+  providerId String?
+
+  type     MessageType @default(TEXT)
+  content  String?
+  metadata Json?
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderType MessageSenderType
+
+  senderUserId String?
+  senderUser   User?   @relation(fields: [senderUserId], references: [id])
+
+  senderContactId String?
+  senderContact   Contact? @relation(fields: [senderContactId], references: [id])
+
+  mediaId String?
+  media   Media?  @relation(fields: [mediaId], references: [id])
+
+  // --- SUPORTE A REPLY ---
+  quotedMessageId String?
+  quotedMessage   Message?  @relation("QuotedMessage", fields: [quotedMessageId], references: [id])
+  replies         Message[] @relation("QuotedMessage")
+
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("messages")
 }

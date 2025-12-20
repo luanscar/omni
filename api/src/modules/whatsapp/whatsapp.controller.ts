@@ -1,8 +1,9 @@
 import { Controller, Get, Post, Param, HttpStatus, Res, } from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
-import { ApiOperation, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
 
 @ApiTags('Whatsapp')
+@ApiBearerAuth()
 @Controller('whatsapp')
 export class WhatsappController {
   constructor(private readonly whatsappService: WhatsappService) { }
@@ -10,6 +11,7 @@ export class WhatsappController {
   @Post(':channelId/start')
   @ApiOperation({ summary: 'Inicia uma sessão e gera o QR Code' })
   @ApiResponse({ status: 201, description: 'Sessão iniciada (QR Code gerado ou status retornado).' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'Canal não encontrado.' })
   async startSession(@Param('channelId') channelId: string) {
     // TODO: Verificar se o channelId pertence ao tenant do usuário (segurança)
@@ -31,6 +33,7 @@ export class WhatsappController {
       }
     }
   })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'QR Code não disponível ou sessão conectada.' })
   async getQrImage(@Param('channelId') channelId: string, @Res() res) {
     const { qrCode } = this.whatsappService.getSessionStatus(channelId);
@@ -54,6 +57,7 @@ export class WhatsappController {
   @Get(':channelId/status')
   @ApiOperation({ summary: 'Retorna o status da conexão e o QR Code (se houver)' })
   @ApiResponse({ status: 200, description: 'Status retornado com sucesso.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'Canal não encontrado.' })
   async getStatus(@Param('channelId') channelId: string) {
     return this.whatsappService.getSessionStatus(channelId);
@@ -62,6 +66,7 @@ export class WhatsappController {
   @Post(':channelId/logout')
   @ApiOperation({ summary: 'Desconecta e limpa a sessão' })
   @ApiResponse({ status: 201, description: 'Sessão encerrada com sucesso.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'Canal não encontrado.' })
   async logout(@Param('channelId') channelId: string) {
     return this.whatsappService.logout(channelId);

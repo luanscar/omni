@@ -52,3 +52,18 @@ export const MessageSenderType = {
 } as const
 
 export type MessageSenderType = (typeof MessageSenderType)[keyof typeof MessageSenderType]
+
+
+export const MessageType = {
+  TEXT: 'TEXT',
+  IMAGE: 'IMAGE',
+  VIDEO: 'VIDEO',
+  AUDIO: 'AUDIO',
+  DOCUMENT: 'DOCUMENT',
+  LOCATION: 'LOCATION',
+  CONTACT: 'CONTACT',
+  STICKER: 'STICKER',
+  REACTION: 'REACTION'
+} as const
+
+export type MessageType = (typeof MessageType)[keyof typeof MessageType]

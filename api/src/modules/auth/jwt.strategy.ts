@@ -23,15 +23,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload) {
-    try {
-      const user = await this.authService.validateUser(
-        payload.email,
-        payload.password,
-      );
-      return user;
-    } catch {
-      throw new UnauthorizedException('Token inválido');
+  async validate(payload: any) {
+    const user = await this.authService.validateUserById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('Usuário não encontrado ou inativo.');
     }
+    return user;
   }
 }

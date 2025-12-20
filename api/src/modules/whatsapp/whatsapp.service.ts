@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -7,22 +7,37 @@ import makeWASocket, {
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   WASocket,
+  AnyMessageContent
 } from '@whiskeysockets/baileys';
 import * as qrcode from 'qrcode';
 import * as fs from 'fs';
 import * as path from 'path';
+import { StorageService } from '../storage/storage.service';
+import { MessageType } from 'prisma/generated/enums';
+
+export interface SendMessageOptions {
+  to: string;
+  type: MessageType;
+  content?: string;
+  mediaId?: string;
+  location?: any;
+  contact?: any;
+  reaction?: any;
+  replyToProviderId?: string;
+}
 
 @Injectable()
 export class WhatsappService implements OnModuleInit {
   private readonly logger = new Logger(WhatsappService.name);
-  // Tornei pública a leitura do map (ou criei um getter abaixo)
   private sessions = new Map<string, WASocket>();
   private qrCodes = new Map<string, string>();
   private connectionStatus = new Map<string, string>();
 
   constructor(
     private prisma: PrismaService,
-    @InjectQueue('whatsapp-events') private queue: Queue
+    @InjectQueue('whatsapp-events') private queue: Queue,
+    @Inject(forwardRef(() => StorageService))
+    private storageService: StorageService
   ) { }
 
   async onModuleInit() {
@@ -30,12 +45,118 @@ export class WhatsappService implements OnModuleInit {
     await this.reconnectSavedSessions();
   }
 
-  // --- NOVO MÉTODO ---
-  // Permite que outros serviços (como o Processor) acessem o socket ativo
   getSocket(channelId: string): WASocket | undefined {
     return this.sessions.get(channelId);
   }
-  // -------------------
+
+  // --- IMPLEMENTAÇÃO DO ENVIO ---
+  async sendMessage(channelId: string, options: SendMessageOptions): Promise<string | null> {
+    const socket = this.getSocket(channelId);
+    if (!socket) {
+      throw new Error(`Sessão do WhatsApp não encontrada ou desconectada para o canal ${channelId}.`);
+    }
+
+    let jid = options.to;
+    if (!jid.includes('@')) {
+      jid = `${jid}@s.whatsapp.net`;
+    }
+
+    let payload: AnyMessageContent;
+
+    switch (options.type) {
+      case MessageType.TEXT:
+        payload = { text: options.content || '' };
+        break;
+
+      case MessageType.IMAGE:
+      case MessageType.VIDEO:
+      case MessageType.AUDIO:
+      case MessageType.DOCUMENT:
+      case MessageType.STICKER:
+        if (!options.mediaId) throw new Error('MediaID é obrigatório para envio de mídia.');
+
+        const mediaInfo = await this.storageService.getDownloadUrl(options.mediaId, 'SYSTEM');
+        const mediaObj = { url: mediaInfo.url };
+
+        if (options.type === MessageType.IMAGE) {
+          payload = { image: mediaObj, caption: options.content };
+        } else if (options.type === MessageType.VIDEO) {
+          payload = { video: mediaObj, caption: options.content };
+        } else if (options.type === MessageType.AUDIO) {
+          payload = { audio: mediaObj, mimetype: mediaInfo.mimeType || 'audio/mp4', ptt: true };
+        } else if (options.type === MessageType.STICKER) {
+          payload = { sticker: mediaObj };
+        } else {
+          payload = {
+            document: mediaObj,
+            mimetype: mediaInfo.mimeType || 'application/octet-stream',
+            fileName: mediaInfo.originalName || options.content || 'arquivo'
+          };
+        }
+        break;
+
+      case MessageType.LOCATION:
+        if (!options.location) throw new Error('Dados de localização obrigatórios.');
+        payload = {
+          location: {
+            degreesLatitude: options.location.degreesLatitude,
+            degreesLongitude: options.location.degreesLongitude,
+            name: options.location.name,
+            address: options.location.address
+          }
+        };
+        break;
+
+      case MessageType.CONTACT:
+        if (!options.contact) throw new Error('Dados do contato obrigatórios.');
+        payload = {
+          contacts: {
+            displayName: options.contact.displayName,
+            contacts: [{ vcard: options.contact.vcard }]
+          }
+        };
+        break;
+
+      case MessageType.REACTION:
+        if (!options.reaction) throw new Error('Dados da reação obrigatórios.');
+        payload = {
+          react: {
+            text: options.reaction.text,
+            key: {
+              remoteJid: jid,
+              id: options.reaction.key,
+              fromMe: false
+            }
+          }
+        };
+        break;
+
+      default:
+        throw new Error(`Tipo de mensagem não suportado: ${options.type}`);
+    }
+
+    // --- LÓGICA DE QUOTE / REPLY ---
+    let quoteOptions = {};
+    if (options.replyToProviderId) {
+      // Stub para o Baileys entender que é uma resposta
+      const quotedMsgStub: any = {
+        key: {
+          remoteJid: jid,
+          id: options.replyToProviderId,
+          fromMe: false,
+          participant: jid
+        },
+        message: { conversation: "..." }
+      };
+
+      quoteOptions = { quoted: quotedMsgStub };
+    }
+
+    const sentMsg = await socket.sendMessage(jid, payload, quoteOptions);
+    return sentMsg?.key.id || null;
+  }
+
+  // --- MÉTODOS DE SESSÃO ---
 
   private ensureSessionsDir() {
     const dir = path.join(process.cwd(), 'sessions');

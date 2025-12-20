@@ -28,6 +28,9 @@ export class StorageController {
     },
   })
   @ApiResponse({ status: 201, description: 'Arquivo enviado com sucesso.' })
+  @ApiResponse({ status: 400, description: 'Dados inválidos.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Proibido.' })
   async upload(@Req() req: FastifyRequest, @Request() requestUser: any) {
     // Método específico do fastify-multipart
     const file = await req.file();
@@ -43,6 +46,8 @@ export class StorageController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({ summary: 'Listar todos os arquivos do tenant' })
   @ApiResponse({ status: 200, description: 'Lista de arquivos.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Proibido.' })
   findAll(@Request() req) {
     return this.storageService.findAll(req.user.tenantId);
   }
@@ -51,6 +56,9 @@ export class StorageController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({ summary: 'Gerar URL assinada para download/visualização' })
   @ApiResponse({ status: 200, description: 'URL gerada com sucesso.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Proibido.' })
+  @ApiResponse({ status: 404, description: 'Arquivo não encontrado.' })
   getDownloadUrl(@Param('id') id: string, @Request() req) {
     return this.storageService.getDownloadUrl(id, req.user.tenantId);
   }
@@ -59,6 +67,9 @@ export class StorageController {
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
   @ApiOperation({ summary: 'Remover um arquivo permanentemente' })
   @ApiResponse({ status: 200, description: 'Arquivo removido.' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Proibido.' })
+  @ApiResponse({ status: 404, description: 'Arquivo não encontrado.' })
   remove(@Param('id') id: string, @Request() req) {
     return this.storageService.remove(id, req.user.tenantId);
   }

@@ -27,8 +27,8 @@ export * from "./enums"
  * @example
  * ```
  * const prisma = new PrismaClient()
- * // Fetch zero or more Conversations
- * const conversations = await prisma.conversation.findMany()
+ * // Fetch zero or more Tenants
+ * const tenants = await prisma.tenant.findMany()
  * ```
  * 
  * Read more in our [docs](https://pris.ly/d/client).
@@ -38,25 +38,15 @@ export type PrismaClient<LogOpts extends Prisma.LogLevel = never, OmitOpts exten
 export { Prisma }
 
 /**
- * Model Conversation
+ * Model Tenant
  * 
  */
-export type Conversation = Prisma.ConversationModel
+export type Tenant = Prisma.TenantModel
 /**
- * Model Message
+ * Model User
  * 
  */
-export type Message = Prisma.MessageModel
-/**
- * Model TeamMember
- * 
- */
-export type TeamMember = Prisma.TeamMemberModel
-/**
- * Model Team
- * 
- */
-export type Team = Prisma.TeamModel
+export type User = Prisma.UserModel
 /**
  * Model Channel
  * 
@@ -68,17 +58,27 @@ export type Channel = Prisma.ChannelModel
  */
 export type Contact = Prisma.ContactModel
 /**
- * Model Tenant
+ * Model Team
  * 
  */
-export type Tenant = Prisma.TenantModel
+export type Team = Prisma.TeamModel
+/**
+ * Model TeamMember
+ * 
+ */
+export type TeamMember = Prisma.TeamMemberModel
 /**
  * Model Media
  * 
  */
 export type Media = Prisma.MediaModel
 /**
- * Model User
+ * Model Conversation
  * 
  */
-export type User = Prisma.UserModel
+export type Conversation = Prisma.ConversationModel
+/**
+ * Model Message
+ * 
+ */
+export type Message = Prisma.MessageModel
