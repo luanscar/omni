@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { ConversationStatus } from 'prisma/generated/enums';
+import { ConversationStatus, MessageSenderType } from 'prisma/generated/enums';
 
 class ConversationContact {
     @ApiProperty({ example: 'Luan Araújo' })
@@ -25,6 +25,54 @@ class ConversationTeam {
 class ConversationCount {
     @ApiProperty({ example: 5 })
     messages: number;
+}
+
+class ConversationMessageSender {
+    @ApiProperty({ example: 'João Silva' })
+    name: string;
+}
+
+class ConversationMedia {
+    @ApiProperty({ example: 'fa49178f-6595-40b9-a569-3d5c07925555' })
+    id: string;
+
+    @ApiProperty({ example: 'image.jpg' })
+    fileName: string;
+
+    @ApiProperty({ example: 'image/jpeg' })
+    mimeType: string;
+
+    @ApiProperty({ example: '/storage/abc-123/download', required: false })
+    publicUrl?: string;
+}
+
+class ConversationMessage {
+    @ApiProperty({ example: 'fa49178f-6595-40b9-a569-3d5c07925555' })
+    id: string;
+
+    @ApiProperty({ example: 'wamid.HBgLNTU3OTIxMDc1OTIyFQIAERgSNEQ0QzQzRkY5RTIwRjA5OEIzAA==' })
+    providerId?: string;
+
+    @ApiProperty({ example: 'Olá, como posso ajudar?' })
+    content?: string;
+
+    @ApiProperty({ enum: MessageSenderType, example: MessageSenderType.CONTACT })
+    senderType: MessageSenderType;
+
+    @ApiProperty({ type: ConversationMedia, required: false })
+    media?: ConversationMedia;
+
+    @ApiProperty({ type: ConversationMessageSender, required: false })
+    senderContact?: ConversationMessageSender;
+
+    @ApiProperty({ type: ConversationMessageSender, required: false })
+    senderUser?: ConversationMessageSender;
+
+    @ApiProperty({ example: false })
+    read: boolean;
+
+    @ApiProperty({ example: '2025-12-20T02:40:14.742Z' })
+    createdAt: Date;
 }
 
 export class Conversation {
@@ -64,9 +112,13 @@ export class Conversation {
     @ApiProperty({ type: ConversationCount })
     _count: ConversationCount;
 
+    @ApiProperty({ type: [ConversationMessage], description: 'Array com a última mensagem da conversa' })
+    messages: ConversationMessage[];
+
     @ApiProperty({ example: '2025-12-20T02:40:14.742Z' })
     createdAt: Date;
 
     @ApiProperty({ example: '2025-12-20T02:40:14.742Z' })
     updatedAt: Date;
 }
+

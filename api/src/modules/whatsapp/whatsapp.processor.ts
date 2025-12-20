@@ -25,13 +25,19 @@ export class WhatsappProcessor {
     async handleIncomingMessage(job: Job<any>) {
         const { message, channelId, tenantId } = job.data as { message: WAMessage, channelId: string, tenantId: string };
 
-        if (message.key.fromMe) return;
-
         const remoteJid = message.key.remoteJid;
         const isGroup = remoteJid.endsWith('@g.us');
         const pushName = message.pushName || (isGroup ? 'Grupo' : 'Desconhecido');
+        const isFromMe = message.key.fromMe;
 
-        this.logger.debug(`Processing message type: ${getContentType(message.message)} from ${remoteJid}`);
+        this.logger.debug(`Processing message type: ${getContentType(message.message)} from ${remoteJid} | fromMe: ${isFromMe}`);
+
+        // Mensagens enviadas pelo sistema (fromMe) já foram salvas pelo messages.service com o userId correto
+        // Aqui processamos apenas mensagens RECEBIDAS de contatos
+        if (isFromMe) {
+            this.logger.debug(`Ignoring fromMe message - already processed by messages.service`);
+            return;
+        }
 
         try {
             const { content, mediaId } = await this.extractMessageContent(message, tenantId);
@@ -44,14 +50,54 @@ export class WhatsappProcessor {
             const contact = await this.findOrCreateContact(tenantId, remoteJid, pushName, channelId, isGroup);
             const conversation = await this.findOrCreateConversation(tenantId, channelId, contact.id);
 
+            // Detectar se é uma resposta (quotedMessage)
+            let quotedMessageId: string | null = null;
+            const msg = message.message;
+
+            // Log detalhado para debug
+            this.logger.debug(`Message structure: ${JSON.stringify(msg, null, 2)}`);
+
+            // O contextInfo pode estar em qualquer tipo de mensagem
+            const contextInfo = msg?.extendedTextMessage?.contextInfo
+                || msg?.imageMessage?.contextInfo
+                || msg?.videoMessage?.contextInfo
+                || msg?.audioMessage?.contextInfo
+                || msg?.documentMessage?.contextInfo
+                || msg?.stickerMessage?.contextInfo;
+
+            this.logger.debug(`ContextInfo found: ${JSON.stringify(contextInfo, null, 2)}`);
+
+            if (contextInfo?.stanzaId) {
+                const quotedProviderId = contextInfo.stanzaId;
+                this.logger.debug(`Message is a reply to: ${quotedProviderId}`);
+
+                // Buscar a mensagem original pelo providerId
+                const quotedMessage = await this.prisma.message.findFirst({
+                    where: {
+                        conversationId: conversation.id,
+                        providerId: quotedProviderId
+                    }
+                });
+
+                if (quotedMessage) {
+                    quotedMessageId = quotedMessage.id;
+                    this.logger.debug(`Found quoted message: ${quotedMessageId}`);
+                } else {
+                    this.logger.warn(`Quoted message not found for providerId: ${quotedProviderId}`);
+                }
+            } else {
+                this.logger.debug(`No contextInfo.stanzaId found - not a reply`);
+            }
+
             const savedMessage = await this.prisma.message.create({
                 data: {
                     conversationId: conversation.id,
-                    providerId: message.key.id, // Salva o ID original do WhatsApp para permitir Reply depois
+                    providerId: message.key.id,
                     content: content,
                     mediaId: mediaId,
                     senderType: MessageSenderType.CONTACT,
                     senderContactId: contact.id,
+                    quotedMessageId: quotedMessageId,
                     read: false,
                 },
                 include: {
@@ -60,7 +106,7 @@ export class WhatsappProcessor {
                 }
             });
 
-            this.logger.log(`Message saved! ID: ${savedMessage.id} | Type: ${mediaId ? 'Media' : 'Text'}`);
+            this.logger.log(`Message saved! ID: ${savedMessage.id} | Type: ${mediaId ? 'Media' : 'Text'} | Is Reply: ${!!quotedMessageId}`);
 
             this.eventsGateway.emitNewMessage(tenantId, {
                 ...savedMessage,

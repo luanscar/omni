@@ -61,7 +61,16 @@ export class ConversationsService {
         contact: { select: { name: true, profilePicUrl: true } },
         assignee: { select: { name: true, avatarUrl: true } },
         team: { select: { name: true } },
-        _count: { select: { messages: true } }
+        _count: { select: { messages: true } },
+        messages: {
+          take: 1,
+          orderBy: { createdAt: 'desc' },
+          include: {
+            media: true,
+            senderContact: { select: { name: true } },
+            senderUser: { select: { name: true } }
+          }
+        }
       },
       orderBy: { updatedAt: 'desc' }
     });

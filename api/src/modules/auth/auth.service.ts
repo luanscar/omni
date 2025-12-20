@@ -34,7 +34,10 @@ export class AuthService {
     if (user && user.active) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...result } = user;
-      return result;
+      return {
+        ...result,
+        userId: result.id, // Adiciona userId para facilitar acesso nos controllers
+      };
     }
     return null;
   }
