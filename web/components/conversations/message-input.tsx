@@ -27,7 +27,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   const [content, setContent] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [pendingFiles, setPendingFiles] = useState<{ file: File; caption: string }[]>([])
   const [previewIndex, setPreviewIndex] = useState(0)
   
   const { mutate: sendMessage, isPending } = useCreateMessage()
@@ -120,7 +120,8 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
 
-    setPendingFiles(prev => [...prev, ...files])
+    const newPending = files.map(f => ({ file: f, caption: '' }))
+    setPendingFiles(prev => [...prev, ...newPending])
     
     // Abrir o primeiro se for a primeira carga
     if (pendingFiles.length === 0) {
@@ -137,13 +138,13 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
     console.log('[BATCH DEBUG] Iniciando upload de', pendingFiles.length, 'arquivos')
     
     uploadFileBatch({ 
-        files: pendingFiles, 
+        files: pendingFiles.map(p => p.file), 
         category: 'chat_media' 
     }, {
         onSuccess: (medias) => {
             console.log('[BATCH DEBUG] Upload concluído:', medias)
             
-            // Enviar mensagens sequencialmente ou em paralelo
+            // Enviar mensagens sequencialmente
             medias.forEach((media, index) => {
                 let type = MessageType.DOCUMENT
                 if (media.mimeType.startsWith('image/')) type = MessageType.IMAGE
@@ -152,7 +153,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
 
                 sendMessage({
                     conversationId,
-                    content: index === 0 ? content : '', // Caption vai na primeira mensagem
+                    content: pendingFiles[index]?.caption || '', 
                     type,
                     mediaId: media.id,
                     replyToId: replyTo?.id
@@ -317,10 +318,10 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                       <X className="h-6 w-6" />
                   </Button>
                   <div className="text-foreground text-center">
-                      <div className="font-semibold">{pendingFiles[previewIndex]?.name}</div>
+                      <div className="font-semibold">{pendingFiles[previewIndex]?.file.name}</div>
                       <div className="text-xs text-muted-foreground">
-                          {pendingFiles[previewIndex]?.type.startsWith('image/') ? 'Imagem' : 
-                           pendingFiles[previewIndex]?.type.startsWith('video/') ? 'Vídeo' : 'Documento'}
+                          {pendingFiles[previewIndex]?.file.type.startsWith('image/') ? 'Imagem' : 
+                           pendingFiles[previewIndex]?.file.type.startsWith('video/') ? 'Vídeo' : 'Documento'}
                       </div>
                   </div>
                   <div className="w-10" /> {/* Spacer */}
@@ -328,22 +329,22 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
 
               {/* Main Preview */}
               <div className="flex-1 flex items-center justify-center p-4 min-h-0">
-                  {pendingFiles[previewIndex]?.type.startsWith('image/') ? (
+                  {pendingFiles[previewIndex]?.file.type.startsWith('image/') ? (
                       <img 
-                        src={URL.createObjectURL(pendingFiles[previewIndex])} 
+                        src={URL.createObjectURL(pendingFiles[previewIndex].file)} 
                         className="max-h-full max-w-full object-contain"
                         alt="Preview"
                       />
-                  ) : pendingFiles[previewIndex]?.type.startsWith('video/') ? (
+                  ) : pendingFiles[previewIndex]?.file.type.startsWith('video/') ? (
                       <video 
-                        src={URL.createObjectURL(pendingFiles[previewIndex])} 
+                        src={URL.createObjectURL(pendingFiles[previewIndex].file)} 
                         className="max-h-full max-w-full"
                         controls
                       />
                   ) : (
                       <div className="flex flex-col items-center gap-4 text-foreground">
                           <FileText className="h-24 w-24 opacity-20" />
-                          <span className="text-muted-foreground">{pendingFiles[previewIndex]?.name}</span>
+                          <span className="text-muted-foreground">{pendingFiles[previewIndex]?.file.name}</span>
                       </div>
                   )}
               </div>
@@ -355,8 +356,15 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                       <input 
                         className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-muted-foreground mr-2"
                         placeholder="Digite uma mensagem"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
+                        value={pendingFiles[previewIndex]?.caption || ''}
+                        onChange={(e) => {
+                            const val = e.target.value
+                            setPendingFiles(prev => {
+                                const next = [...prev]
+                                next[previewIndex] = { ...next[previewIndex], caption: val }
+                                return next
+                            })
+                        }}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && !e.shiftKey) {
                                 e.preventDefault()
@@ -369,7 +377,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
 
                   {/* Thumbnails Row */}
                   <div className="flex items-center justify-center gap-2 overflow-x-auto py-2">
-                       {pendingFiles.map((file, i) => (
+                       {pendingFiles.map((item, i) => (
                            <div 
                              key={i} 
                              className={cn(
@@ -378,8 +386,8 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                              )}
                              onClick={() => setPreviewIndex(i)}
                            >
-                               {file.type.startsWith('image/') ? (
-                                   <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                               {item.file.type.startsWith('image/') ? (
+                                   <img src={URL.createObjectURL(item.file)} className="w-full h-full object-cover" />
                                ) : (
                                    <div className="w-full h-full bg-muted flex items-center justify-center">
                                        <FileText className="h-6 w-6 text-muted-foreground" />
