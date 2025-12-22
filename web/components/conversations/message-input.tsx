@@ -14,6 +14,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import EmojiPicker, { Theme, EmojiStyle } from 'emoji-picker-react'
 import { cn } from '@/lib/utils'
 import { Message } from '@/lib/api/modules/messages/types'
 
@@ -267,7 +273,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                 multiple
             />
 
-            <EmojiPickerButton />
+            <EmojiPickerButton onEmojiSelect={(emoji) => setContent(prev => prev + emoji)} />
             
             <Button 
                 variant="ghost" 
@@ -399,7 +405,13 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                             }
                         }}
                       />
-                      <EmojiPickerButton />
+                      <EmojiPickerButton onEmojiSelect={(emoji) => {
+                          setPendingFiles(prev => {
+                              const next = [...prev]
+                              next[previewIndex] = { ...next[previewIndex], caption: next[previewIndex].caption + emoji }
+                              return next
+                          })
+                      }} />
                   </div>
 
                   {/* Thumbnails Row */}
@@ -460,10 +472,33 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   )
 }
 
-function EmojiPickerButton({ className }: { className?: string }) {
+function EmojiPickerButton({ className, onEmojiSelect }: { className?: string; onEmojiSelect: (emoji: string) => void }) {
+    const [open, setOpen] = useState(false)
+
     return (
-        <Button variant="ghost" size="icon" className={cn("text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full h-10 w-10", className)}>
-            <Smile className="h-5 w-5" />
-        </Button>
+        <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className={cn("text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full h-10 w-10", className)}
+                >
+                    <Smile className="h-5 w-5" />
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent side="top" align="start" className="p-0 border-none bg-transparent shadow-none w-auto mb-2">
+                <EmojiPicker 
+                    theme={Theme.AUTO}
+                    emojiStyle={EmojiStyle.WHATSAPP}
+                    onEmojiClick={(emojiData) => {
+                        onEmojiSelect(emojiData.emoji)
+                        // setOpen(false) // Descomente se quiser fechar após escolher um emoji
+                    }}
+                    lazyLoadEmojis={true}
+                    skinTonesDisabled={true}
+                    searchPlaceholder="Pesquisar emoji..."
+                />
+            </PopoverContent>
+        </Popover>
     )
 }
