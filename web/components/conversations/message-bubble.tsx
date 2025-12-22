@@ -162,6 +162,32 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         return null
     }
   }
+
+  const renderQuotedMessage = () => {
+    const quoted = message.quotedMessage
+    if (!quoted) return null
+
+    const senderName = quoted.senderType === 'USER' || quoted.senderType === 'SYSTEM'
+      ? 'Você'
+      : (quoted.senderContact?.name || quoted.senderContact?.phoneNumber || 'Contato')
+
+    return (
+      <div className="mb-1 rounded bg-black/5 dark:bg-black/20 border-l-[4px] border-[#06cf9c] overflow-hidden cursor-pointer hover:bg-black/10 dark:hover:bg-black/30 transition-colors">
+        <div className="px-2 py-1 flex flex-col min-w-0">
+          <span className="text-[12px] font-bold text-[#06cf9c] truncate">
+            {senderName}
+          </span>
+          <div className="text-[13px] text-muted-foreground line-clamp-2 leading-snug">
+            {quoted.type === MessageType.TEXT ? quoted.content : (
+              <span className="italic flex items-center gap-1">
+                {quoted.type.toLowerCase()}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
   
   return (
     <>
@@ -181,6 +207,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
                         {message.senderContact?.name || message.senderContact?.phoneNumber}
                     </div>
                 )}
+
+                {/* Renderizar Mensagem Citada (Reply) */}
+                {renderQuotedMessage()}
 
                 {/* Renderizar mídia se existir */}
                 {renderMediaContent()}
