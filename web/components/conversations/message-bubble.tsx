@@ -156,7 +156,8 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         )
 
       case MessageType.CONTACT:
-        const contactData = (message.metadata as any)?.contact
+        const metadata = message.metadata as any
+        const contactData = metadata?.contact || metadata?.contactMessage
         if (!contactData) return null
 
         return (
