@@ -8,14 +8,21 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateTeamDto {
-  @ApiProperty({ example: 'Suporte Técnico', description: 'Nome da equipe' })
-  @IsNotEmpty()
-  @IsString()
+  @ApiProperty({
+    example: 'Suporte Técnico',
+    description: 'Nome da equipe',
+  })
+  @IsString({ message: 'O nome deve ser uma string' })
+  @IsNotEmpty({ message: 'O nome não pode estar vazio' })
   name: string;
 
-  @ApiProperty({ example: 'Equipe responsável pelo Nível 1', required: false })
+  @ApiProperty({
+    example: 'Equipe responsável pelo Nível 1',
+    description: 'Descrição da equipe',
+    required: false,
+  })
   @IsOptional()
-  @IsString()
+  @IsString({ message: 'A descrição deve ser uma string' })
   description?: string;
 
   @ApiProperty({
@@ -24,7 +31,10 @@ export class CreateTeamDto {
     required: false,
   })
   @IsOptional()
-  @IsArray()
-  @IsUUID('4', { each: true })
+  @IsArray({ message: 'Os IDs dos membros devem estar em um array' })
+  @IsUUID('4', {
+    each: true,
+    message: 'Cada ID de membro deve ser um UUID válido',
+  })
   memberIds?: string[];
 }

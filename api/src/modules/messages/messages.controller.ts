@@ -12,16 +12,13 @@ import {
 import { Message } from './entities/message.entity';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from 'prisma/generated/enums';
-import {
-  ForwardMessageDto,
-  ForwardBatchDto,
-} from './dto/forward-message.dto';
+import { ForwardMessageDto, ForwardBatchDto } from './dto/forward-message.dto';
 
 @ApiTags('Messages')
 @ApiBearerAuth()
 @Controller('messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) { }
+  constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
@@ -207,7 +204,10 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
     description: 'Mensagem encaminhada com sucesso.',
   })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 404, description: 'Mensagem original não encontrada.' })
+  @ApiResponse({
+    status: 404,
+    description: 'Mensagem original não encontrada.',
+  })
   async forwardMessage(@Body() forwardDto: ForwardMessageDto, @Request() req) {
     return this.messagesService.forwardMessage(
       forwardDto,

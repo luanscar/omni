@@ -19,7 +19,7 @@ export class AuditController {
   constructor(
     private auditService: AuditService,
     private prisma: PrismaService,
-  ) { }
+  ) {}
 
   @Get('logs')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
