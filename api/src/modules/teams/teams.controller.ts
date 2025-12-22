@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Request,
+  UseGuards,
 } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -21,14 +22,16 @@ import {
 import { Team } from './entities/team.entity';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from 'prisma/generated/enums';
+import { SubscriptionGuard } from '../subscriptions/guards/subscription.guard';
 
 @ApiTags('Teams')
 @ApiBearerAuth()
 @Controller('teams')
 export class TeamsController {
-  constructor(private readonly teamsService: TeamsService) {}
+  constructor(private readonly teamsService: TeamsService) { }
 
   @Post()
+  @UseGuards(SubscriptionGuard)
   // Apenas Admins criam times novos do zero? Ou Agentes também podem criar seus times?
   // Vou manter restrito a Admin/Manager, mas você pode mudar.
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
