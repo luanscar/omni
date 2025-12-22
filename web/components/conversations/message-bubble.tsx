@@ -65,6 +65,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   const hasMedia = !!message.media
   const isAudio = message.type === MessageType.AUDIO
   const isDocument = message.type === MessageType.DOCUMENT
+  const isContact = message.type === MessageType.CONTACT
 
   const renderMedia = () => {
     const media = message.media
@@ -288,6 +289,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
               {renderMedia()}
             </div>
           )}
+
+          {/* Contato (Renderiza layout de cartão) */}
+          {isContact && renderMedia()}
 
           {/* Conteúdo de Texto / Legenda */}
           <div className={cn(
