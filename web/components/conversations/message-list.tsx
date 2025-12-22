@@ -67,7 +67,7 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
 
   return (
     <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
-      <div className="max-w-5xl mx-auto space-y-4">
+      <div className="max-w-6xl mx-auto space-y-4">
         {hasNextPage && (
           <div className="flex justify-center py-2">
             <Button 

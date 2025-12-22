@@ -196,7 +196,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
 
   return (
     <div className="p-2 pb-4 bg-background border-t">
-      <div className="max-w-5xl mx-auto bg-muted/30 dark:bg-[#202c33] rounded-[16px] overflow-hidden flex flex-col border shadow-sm">
+      <div className="max-w-6xl mx-auto bg-muted/30 dark:bg-[#202c33] rounded-[16px] overflow-hidden flex flex-col border shadow-sm">
         {/* Reply Preview */}
         {replyTo && (
           <div className="flex items-center gap-2 p-2 px-4 bg-black/5 dark:bg-black/20 border-b border-black/5 dark:border-white/5 animate-in slide-in-from-bottom-2">

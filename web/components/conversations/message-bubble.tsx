@@ -68,7 +68,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
     switch (message.type) {
       case MessageType.IMAGE:
         return (
-          <div className="mb-2 rounded-lg overflow-hidden max-w-sm">
+          <div className="mb-2 rounded-lg overflow-hidden max-w-md">
             <Link 
               href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=image&mimeType=${encodeURIComponent(media.mimeType)}`}
               scroll={false}
@@ -89,7 +89,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
       case MessageType.VIDEO:
         return (
-          <div className="mb-2 rounded-lg overflow-hidden max-w-sm">
+          <div className="mb-2 rounded-lg overflow-hidden max-w-md">
             <Link 
               href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=video&mimeType=${encodeURIComponent(media.mimeType)}`}
               scroll={false}
@@ -98,7 +98,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
                 mediaId={media.id}
                 mimeType={media.mimeType}
                 type="video"
-                className="w-full h-auto"
+                className="w-full h-auto min-w-[250px]"
               />
             </Link>
             {message.content && (
@@ -114,7 +114,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
               mediaId={media.id}
               mimeType={media.mimeType}
               type="audio"
-              className="max-w-xs"
+              className="max-w-sm"
             />
           </div>
         )
@@ -127,7 +127,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         return (
           <div className="flex flex-col gap-2">
             {isImage && (
-              <div className="rounded-lg overflow-hidden max-w-sm mb-1 bg-muted/20">
+              <div className="rounded-lg overflow-hidden max-w-md mb-1 bg-muted/20">
                 <Link 
                   href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=image&mimeType=${encodeURIComponent(media.mimeType)}`}
                   scroll={false}
@@ -144,7 +144,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
             )}
             <button
               onClick={handleDownloadDocument}
-              className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition max-w-xs w-full text-left"
+              className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition max-w-sm w-full text-left"
             >
               <FileText className="h-8 w-8 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -194,7 +194,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
       <div className={cn("group flex w-full mb-2", isSent ? "justify-end" : "justify-start")}>
         <div
             className={cn(
-            "relative max-w-[85%] md:max-w-[70%] rounded-lg text-[14.2px] shadow-sm flex flex-col",
+            "relative max-w-[92%] md:max-w-[85%] rounded-lg text-[14.2px] shadow-sm flex flex-col",
             isSent
                 ? "bg-[#d9fdd3] text-foreground rounded-tr-none"
                 : "bg-background text-foreground rounded-tl-none border"
