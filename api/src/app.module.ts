@@ -16,6 +16,9 @@ import { MessagesModule } from './modules/messages/messages.module';
 import { BullModule } from '@nestjs/bull';
 import { EventsModule } from './modules/events/events.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { PlansModule } from './modules/plans/plans.module';
+import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
+
 
 @Module({
   imports: [
@@ -37,6 +40,8 @@ import { AuditModule } from './modules/audit/audit.module';
     MessagesModule,
     EventsModule,
     AuditModule,
+    PlansModule,
+    SubscriptionsModule,
   ],
   controllers: [],
   providers: [
@@ -51,4 +56,4 @@ import { AuditModule } from './modules/audit/audit.module';
     },
   ],
 })
-export class AppModule {}
+export class AppModule { }

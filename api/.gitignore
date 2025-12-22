@@ -4,6 +4,7 @@
 /prisma/generated
 /sessions
 
+!.env
 # Logs
 logs
 *.log

@@ -66,6 +66,21 @@ enum AuditStatus {
   PENDING
 }
 
+enum PlanType {
+  BASIC
+  MEDIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  TRIALING
+  INCOMPLETE
+  INCOMPLETE_EXPIRED
+  UNPAID
+}
+
 // --- CORE SAAS MODELS ---
 
 model Tenant {
@@ -83,8 +98,67 @@ model Tenant {
   medias        Media[]
   conversations Conversation[]
   auditLogs     AuditLog[]
+  subscription  Subscription?
 
   @@map("tenants")
+}
+
+model SubscriptionPlan {
+  id          String   @id @default(uuid())
+  name        String
+  type        PlanType @unique
+  description String?
+
+  // Limites do plano
+  maxUsers         Int
+  maxChannels      Int
+  maxConversations Int
+
+  // Integração Stripe
+  stripePriceId   String @unique
+  stripeProductId String
+
+  // Preço em centavos
+  priceMonthly Int
+
+  active Boolean @default(true)
+
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscription_plans")
+}
+
+model Subscription {
+  id String @id @default(uuid())
+
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  planId String
+  plan   SubscriptionPlan @relation(fields: [planId], references: [id])
+
+  status SubscriptionStatus @default(TRIALING)
+
+  // Integração Stripe
+  stripeCustomerId     String?
+  stripeSubscriptionId String? @unique
+
+  // Datas
+  currentPeriodStart DateTime?
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean   @default(false)
+  canceledAt         DateTime?
+  trialEnd           DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([tenantId])
+  @@map("subscriptions")
 }
 
 model User {

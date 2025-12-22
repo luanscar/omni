@@ -90,3 +90,24 @@ export const AuditStatus = {
 } as const
 
 export type AuditStatus = (typeof AuditStatus)[keyof typeof AuditStatus]
+
+
+export const PlanType = {
+  BASIC: 'BASIC',
+  MEDIUM: 'MEDIUM'
+} as const
+
+export type PlanType = (typeof PlanType)[keyof typeof PlanType]
+
+
+export const SubscriptionStatus = {
+  ACTIVE: 'ACTIVE',
+  CANCELED: 'CANCELED',
+  PAST_DUE: 'PAST_DUE',
+  TRIALING: 'TRIALING',
+  INCOMPLETE: 'INCOMPLETE',
+  INCOMPLETE_EXPIRED: 'INCOMPLETE_EXPIRED',
+  UNPAID: 'UNPAID'
+} as const
+
+export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus]

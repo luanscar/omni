@@ -52,6 +52,8 @@ export const AnyNull = runtime.AnyNull
 
 export const ModelName = {
   Tenant: 'Tenant',
+  SubscriptionPlan: 'SubscriptionPlan',
+  Subscription: 'Subscription',
   User: 'User',
   Channel: 'Channel',
   Contact: 'Contact',
@@ -89,6 +91,44 @@ export const TenantScalarFieldEnum = {
 } as const
 
 export type TenantScalarFieldEnum = (typeof TenantScalarFieldEnum)[keyof typeof TenantScalarFieldEnum]
+
+
+export const SubscriptionPlanScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  type: 'type',
+  description: 'description',
+  maxUsers: 'maxUsers',
+  maxChannels: 'maxChannels',
+  maxConversations: 'maxConversations',
+  stripePriceId: 'stripePriceId',
+  stripeProductId: 'stripeProductId',
+  priceMonthly: 'priceMonthly',
+  active: 'active',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SubscriptionPlanScalarFieldEnum = (typeof SubscriptionPlanScalarFieldEnum)[keyof typeof SubscriptionPlanScalarFieldEnum]
+
+
+export const SubscriptionScalarFieldEnum = {
+  id: 'id',
+  tenantId: 'tenantId',
+  planId: 'planId',
+  status: 'status',
+  stripeCustomerId: 'stripeCustomerId',
+  stripeSubscriptionId: 'stripeSubscriptionId',
+  currentPeriodStart: 'currentPeriodStart',
+  currentPeriodEnd: 'currentPeriodEnd',
+  cancelAtPeriodEnd: 'cancelAtPeriodEnd',
+  canceledAt: 'canceledAt',
+  trialEnd: 'trialEnd',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type SubscriptionScalarFieldEnum = (typeof SubscriptionScalarFieldEnum)[keyof typeof SubscriptionScalarFieldEnum]
 
 
 export const UserScalarFieldEnum = {
@@ -205,6 +245,8 @@ export const MessageScalarFieldEnum = {
   senderContactId: 'senderContactId',
   mediaId: 'mediaId',
   quotedMessageId: 'quotedMessageId',
+  isForwarded: 'isForwarded',
+  forwardedFromId: 'forwardedFromId',
   read: 'read',
   createdAt: 'createdAt'
 } as const

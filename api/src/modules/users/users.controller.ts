@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,14 +19,19 @@ import {
 } from '@nestjs/swagger';
 import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 import { User } from './entities/user.entity';
+import { SubscriptionGuard } from '../subscriptions/guards/subscription.guard';
+import { PlanLimitGuard } from '../subscriptions/guards/plan-limit.guard';
+import { CheckPlanLimit } from '../subscriptions/decorators/check-plan-limit.decorator';
 
 @ApiTags('Users')
 @ApiBearerAuth()
+@UseGuards(SubscriptionGuard, PlanLimitGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post()
+  @CheckPlanLimit('users')
   @ApiOperation({ summary: 'Criar um novo usuário' })
   @ApiResponse({
     status: 201,
@@ -34,7 +40,10 @@ export class UsersController {
   })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 403, description: 'Proibido.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Proibido ou limite de usuários do plano atingido.'
+  })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
   }

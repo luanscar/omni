@@ -43,6 +43,16 @@ export { Prisma }
  */
 export type Tenant = Prisma.TenantModel
 /**
+ * Model SubscriptionPlan
+ * 
+ */
+export type SubscriptionPlan = Prisma.SubscriptionPlanModel
+/**
+ * Model Subscription
+ * 
+ */
+export type Subscription = Prisma.SubscriptionModel
+/**
  * Model User
  * 
  */
