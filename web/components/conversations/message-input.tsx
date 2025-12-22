@@ -193,30 +193,30 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
       }
   }
 
-  const handleContactSelect = (contact: Contact) => {
-    if (!contact.phoneNumber) return
+  const handleContactsSelect = (contacts: Contact[]) => {
+    contacts.forEach(contact => {
+        if (!contact.phoneNumber) return
 
-    const cleanPhone = contact.phoneNumber.replace(/\D/g, '')
-    const vcard = `BEGIN:VCARD
+        const cleanPhone = contact.phoneNumber.replace(/\D/g, '')
+        const vcard = `BEGIN:VCARD
 VERSION:3.0
 FN:${contact.name}
 N:${contact.name};;;;
 TEL;TYPE=CELL;waid=${cleanPhone}:${contact.phoneNumber}
 END:VCARD`
 
-    sendMessage({
-      conversationId,
-      type: MessageType.CONTACT,
-      contact: {
-        displayName: contact.name,
-        vcard
-      },
-      replyToId: replyTo?.id
-    }, {
-        onSuccess: () => {
-            onCancelReply?.()
-        }
+        sendMessage({
+          conversationId,
+          type: MessageType.CONTACT,
+          contact: {
+            displayName: contact.name,
+            vcard
+          },
+          replyToId: replyTo?.id
+        })
     })
+    
+    onCancelReply?.()
   }
 
   const formatTime = (seconds: number) => {
@@ -531,7 +531,7 @@ END:VCARD`
       <ContactSelectorDialog 
         open={contactDialogOpen}
         onOpenChange={setContactDialogOpen}
-        onSelect={handleContactSelect}
+        onSelect={handleContactsSelect}
       />
     </div>
   )
