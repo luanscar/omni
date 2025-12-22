@@ -23,9 +23,10 @@ import Link from 'next/link'
 
 interface MessageBubbleProps {
   message: Message
+  onReply?: () => void
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   const isSent = message.senderType === MessageSenderType.USER || message.senderType === MessageSenderType.SYSTEM
   const [forwardOpen, setForwardOpen] = useState(false)
   const { mutate: sendMessage } = useCreateMessage()
@@ -216,7 +217,10 @@ export function MessageBubble({ message }: MessageBubbleProps) {
                     </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align={isSent ? "end" : "start"}>
-                    <DropdownMenuItem className="gap-2 cursor-pointer">
+                    <DropdownMenuItem 
+                        className="gap-2 cursor-pointer"
+                        onClick={onReply}
+                    >
                         <Reply className="h-4 w-4" /> Responder
                     </DropdownMenuItem>
                     <DropdownMenuItem 
