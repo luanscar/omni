@@ -31,6 +31,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   const [forwardOpen, setForwardOpen] = useState(false)
   const { mutate: sendMessage } = useCreateMessage()
 
+  // Debug log para verificar tipos de mensagem
+  console.log('[MESSAGE DEBUG] Type:', message.type, 'Metadata:', message.metadata, 'Content:', message.content)
+
   const handleReaction = (emoji: string) => {
     sendMessage({
       conversationId: message.conversationId,
@@ -69,7 +72,8 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
   const renderMedia = () => {
     const media = message.media
-    if (!media) return null
+    // Permitir contatos sem mídia
+    if (!media && message.type !== MessageType.CONTACT) return null
 
     switch (message.type) {
       case MessageType.IMAGE:
@@ -158,8 +162,14 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
       case MessageType.CONTACT:
         const metadata = message.metadata as any
+        console.log('[CONTACT DEBUG] message.type:', message.type)
+        console.log('[CONTACT DEBUG] message.metadata:', metadata)
         const contactData = metadata?.contact || metadata?.contactMessage || (metadata?.displayName ? metadata : null)
-        if (!contactData) return null
+        console.log('[CONTACT DEBUG] contactData:', contactData)
+        if (!contactData) {
+          console.log('[CONTACT DEBUG] No contact data found, returning null')
+          return null
+        }
 
         return (
           <div className="w-[300px] min-w-[250px] bg-white/50 dark:bg-black/10 rounded-lg overflow-hidden mt-1 mx-1">
