@@ -22,13 +22,17 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
   // Real-time updates
   useSocketEvent<Message>('new-message', (newMessage) => {
     if (newMessage.conversationId === conversationId) {
-      // Opção 1: Invalidar cache (mais simples, garante consistência)
       queryClient.invalidateQueries({
         queryKey: queryKeys.messages.byConversation(conversationId)
       })
-      
-      // Opção 2 (Otimista): Atualizar cache manualmente (mais complexo com infinite query)
-      // Futuro: Implementar atualização otimista se performance for crítica
+    }
+  })
+
+  useSocketEvent<Message>('message-updated', (updatedMessage) => {
+    if (updatedMessage.conversationId === conversationId) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.messages.byConversation(conversationId)
+      })
     }
   })
   

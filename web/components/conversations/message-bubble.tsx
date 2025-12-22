@@ -188,6 +188,32 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
       </div>
     )
   }
+
+  const renderReactions = () => {
+    const reactions = (message.metadata as any)?.reactions
+    if (!reactions || Object.keys(reactions).length === 0) return null
+
+    const emojis = Object.values(reactions) as string[]
+    const uniqueEmojis = Array.from(new Set(emojis))
+
+    return (
+      <div className={cn(
+        "absolute -bottom-3 flex items-center gap-0.5 bg-background dark:bg-[#202c33] border border-black/5 dark:border-white/10 shadow-sm rounded-full px-1 py-0.5 select-none animate-in zoom-in-50 duration-200 z-10",
+        isSent ? "right-2" : "left-2"
+      )}>
+        <div className="flex -space-x-1">
+          {uniqueEmojis.slice(0, 3).map((emoji, i) => (
+            <span key={i} className="text-[14px] leading-none">{emoji}</span>
+          ))}
+        </div>
+        {emojis.length > 1 && (
+          <span className="text-[11px] font-semibold px-0.5 text-muted-foreground">
+            {emojis.length}
+          </span>
+        )}
+      </div>
+    )
+  }
   
   return (
     <>
@@ -213,6 +239,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
                 {/* Renderizar mídia se existir */}
                 {renderMediaContent()}
+
+                {/* Mostrar reações se existirem */}
+                {renderReactions()}
 
                 {/* Mostrar texto apenas se não for mídia pura (ou se tiver legenda) */}
                 {message.type === MessageType.TEXT && message.content && (
