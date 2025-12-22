@@ -35,11 +35,21 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(app, config);
 
+  // Swagger UI tradicional em /docs
+  SwaggerModule.setup('docs', app, document);
+
+  // Servir o JSON do OpenAPI
+  app.getHttpAdapter().get('/openapi.json', (req, res) => {
+    res.header('Content-Type', 'application/json');
+    res.send(document);
+  });
+
+  // Interface Scalar moderna em /reference
   app.use(
     '/reference',
     apiReference({
       url: '/openapi.json',
-      theme: 'purple', // Tema visual (opcional: 'purple', 'moon', 'solar', etc)
+      theme: 'purple',
       spec: {
         content: document,
       },
@@ -51,6 +61,8 @@ async function bootstrap() {
   app.enableShutdownHooks();
   await app.listen(3000, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
-  console.log(`Docs available on: ${await app.getUrl()}/reference`);
+  console.log(`Swagger UI: ${await app.getUrl()}/docs`);
+  console.log(`Scalar UI: ${await app.getUrl()}/reference`);
+  console.log(`OpenAPI JSON: ${await app.getUrl()}/openapi.json`);
 }
 bootstrap();
