@@ -215,9 +215,15 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
     )
   }
   
+  const hasReactions = !!(message.metadata as any)?.reactions && Object.keys((message.metadata as any).reactions).length > 0
+
   return (
     <>
-      <div className={cn("group flex w-full mb-2", isSent ? "justify-end" : "justify-start")}>
+      <div className={cn(
+        "group flex w-full", 
+        isSent ? "justify-end" : "justify-start",
+        hasReactions ? "mb-5" : "mb-1"
+      )}>
         <div
             className={cn(
             "relative max-w-[92%] md:max-w-[85%] rounded-lg text-[14.2px] shadow-sm flex flex-col",
