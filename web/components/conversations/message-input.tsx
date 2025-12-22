@@ -255,59 +255,59 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                         <Paperclip className="h-5 w-5" />
                     </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" side="top" className="w-[220px] rounded-[16px] p-2 bg-[#232d36] dark:bg-[#232d36] border-none shadow-2xl mb-2">
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#7f66ff]">
-                            <FileText className="h-5 w-5 fill-current" />
+                <DropdownMenuContent align="start" side="top" className="w-[220px] rounded-[16px] p-2 bg-popover text-popover-foreground border shadow-2xl mb-2">
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors" onClick={() => fileInputRef.current?.click()}>
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <FileText className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Documento</span>
                     </DropdownMenuItem>
                     
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors" onClick={() => fileInputRef.current?.click()}>
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#007bff]">
-                            <ImageIcon className="h-5 w-5 fill-current" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors" onClick={() => fileInputRef.current?.click()}>
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <ImageIcon className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Fotos e vídeos</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#ff2e74]">
-                            <Camera className="h-5 w-5 fill-current" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <Camera className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Câmera</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#ff8c00]">
-                            <Headphones className="h-5 w-5 fill-current" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <Headphones className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Áudio</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#00aaff]">
-                            <User2 className="h-5 w-5 fill-current" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <User2 className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Contato</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#ffbc0d]">
-                            <BarChart3 className="h-5 w-5 fill-current saturate-150" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <BarChart3 className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Enquete</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#ff2e74]">
-                            <Calendar className="h-5 w-5 fill-current" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <Calendar className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Evento</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer text-white hover:bg-white/5 rounded-lg focus:bg-white/10 transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 rounded-md text-[#00d982]">
-                            <PlusCircle className="h-5 w-5 fill-current" />
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                        <div className="flex items-center justify-center h-5 w-5 text-primary">
+                            <PlusCircle className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Nova figurinha</span>
                     </DropdownMenuItem>
