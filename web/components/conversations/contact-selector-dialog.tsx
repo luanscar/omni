@@ -32,7 +32,7 @@ export function ContactSelectorDialog({
   const [selectedContacts, setSelectedContacts] = useState<Contact[]>([])
   const { data: contacts, isLoading } = useContacts()
 
-  const filteredContacts = contacts?.filter(contact => 
+  const filteredContacts = contacts?.filter(contact =>
     contact.name.toLowerCase().includes(search.toLowerCase()) ||
     contact.phoneNumber?.includes(search)
   )
@@ -71,63 +71,65 @@ export function ContactSelectorDialog({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 bg-background/50">
-          {isLoading ? (
-            <div className="flex justify-center p-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <div className="flex flex-col">
-              {filteredContacts?.length === 0 ? (
-                <div className="text-center text-sm text-muted-foreground p-8">
-                  Nenhum contato encontrado.
-                </div>
-              ) : (
-                filteredContacts?.map(contact => (
-                  <div
-                    key={contact.id}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 cursor-pointer transition-colors border-b border-border/40 last:border-0"
-                    onClick={() => toggleContact(contact)}
-                  >
-                    <Checkbox 
-                      checked={!!selectedContacts.find(c => c.id === contact.id)}
-                      onCheckedChange={() => toggleContact(contact)}
-                      className="rounded-full"
-                    />
+        <div className="flex-1 min-h-0">
+          <ScrollArea className="h-full bg-background/50">
+            {isLoading ? (
+              <div className="flex justify-center p-8">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : (
+              <div className="flex flex-col pb-2">
+                {filteredContacts?.length === 0 ? (
+                  <div className="text-center text-sm text-muted-foreground p-8">
+                    Nenhum contato encontrado.
+                  </div>
+                ) : (
+                  filteredContacts?.map(contact => (
+                    <div
+                      key={contact.id}
+                      className="flex items-center gap-3 px-4 py-3 hover:bg-accent/50 cursor-pointer transition-colors border-b border-border/40 last:border-0"
+                      onClick={() => toggleContact(contact)}
+                    >
+                      <Checkbox
+                        checked={!!selectedContacts.find(c => c.id === contact.id)}
+                        onCheckedChange={() => toggleContact(contact)}
+                        className="rounded-full"
+                      />
 
-                    <Avatar className="h-10 w-10 shrink-0">
-                      <AvatarImage src={contact.profilePicUrl || ''} />
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        <User className="h-5 w-5" />
-                      </AvatarFallback>
-                    </Avatar>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate text-[15px]">
-                        {contact.name}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {contact.phoneNumber || 'Sem número'}
+                      <Avatar className="h-10 w-10 shrink-0">
+                        <AvatarImage src={contact.profilePicUrl || ''} />
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          <User className="h-5 w-5" />
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate text-[15px]">
+                          {contact.name}
+                        </div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {contact.phoneNumber || 'Sem número'}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </ScrollArea>
+                  ))
+                )}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
 
         <DialogFooter className="p-3 border-t bg-muted/20 flex items-center justify-between sm:justify-between">
-           <div className="text-xs text-muted-foreground pl-1">
-             {selectedContacts.length} selecionado(s)
-           </div>
-           <Button 
-             onClick={handleSend} 
-             disabled={selectedContacts.length === 0}
-             className="rounded-full h-11 w-11 p-0 shadow-lg"
-           >
-             <Send className="h-5 w-5 ml-0.5" />
-           </Button>
+          <div className="text-xs text-muted-foreground pl-1">
+            {selectedContacts.length} selecionado(s)
+          </div>
+          <Button
+            onClick={handleSend}
+            disabled={selectedContacts.length === 0}
+            className="rounded-full h-11 w-11 p-0 shadow-lg"
+          >
+            <Send className="h-5 w-5 ml-0.5" />
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
