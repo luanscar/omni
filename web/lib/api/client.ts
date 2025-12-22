@@ -5,9 +5,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
 export const api: AxiosInstance = axios.create({
   baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
 })
 
 // Request interceptor para adicionar token
@@ -17,7 +14,7 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`
     }
-    
+
     // Log de requisições para debug (apenas em desenvolvimento)
     if (process.env.NODE_ENV === 'development') {
       console.log('API Request:', {
@@ -26,7 +23,7 @@ api.interceptors.request.use(
         hasToken: !!token,
       })
     }
-    
+
     return config
   },
   (error: AxiosError) => {
