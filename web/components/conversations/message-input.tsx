@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic, Smile, Trash2, Check, X, Loader2, FileText } from 'lucide-react'
+import { Send, Paperclip, Mic, Smile, Trash2, Check, X, Loader2, FileText, Signature } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateMessage } from '@/lib/api/modules/messages'
@@ -29,6 +29,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [pendingFiles, setPendingFiles] = useState<{ file: File; caption: string }[]>([])
   const [previewIndex, setPreviewIndex] = useState(0)
+  const [signMessage, setSignMessage] = useState(false)
   
   const { mutate: sendMessage, isPending } = useCreateMessage()
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile()
@@ -99,7 +100,8 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
       conversationId,
       content: content.trim(),
       type: MessageType.TEXT,
-      replyToId: replyTo?.id
+      replyToId: replyTo?.id,
+      signMessage
     }, {
       onSuccess: () => {
         setContent('')
@@ -156,7 +158,8 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                     content: pendingFiles[index]?.caption || '', 
                     type,
                     mediaId: media.id,
-                    replyToId: replyTo?.id
+                    replyToId: replyTo?.id,
+                    signMessage
                 })
             })
 
@@ -264,8 +267,19 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                 multiple
             />
 
-            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full">
-                <Smile className="h-5 w-5" />
+            <EmojiPickerButton />
+            
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                className={cn(
+                    "h-10 w-10 transition-colors rounded-full",
+                    signMessage ? "text-primary bg-primary/10 hover:bg-primary/20" : "text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5"
+                )}
+                onClick={() => setSignMessage(!signMessage)}
+                title={signMessage ? "Assinatura ativada" : "Assinatura desativada"}
+            >
+                <Signature className="h-5 w-5" />
             </Button>
           </div>
 
@@ -353,6 +367,19 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
               <div className="bg-muted/30 p-4 flex flex-col gap-4 border-t">
                   {/* Caption Input */}
                   <div className="max-w-4xl mx-auto w-full bg-background rounded-lg flex items-center px-4 py-2 border">
+                      <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className={cn(
+                                "h-10 w-10 transition-colors rounded-full shrink-0",
+                                signMessage ? "text-primary bg-primary/20 hover:bg-primary/30" : "text-white/70 hover:bg-white/10"
+                            )}
+                            onClick={() => setSignMessage(!signMessage)}
+                            title={signMessage ? "Assinatura ativada" : "Assinatura desativada"}
+                        >
+                            <Signature className="h-5 w-5" />
+                      </Button>
+
                       <input 
                         className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-muted-foreground mr-2"
                         placeholder="Digite uma mensagem"
@@ -433,10 +460,10 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   )
 }
 
-function EmojiPickerButton() {
+function EmojiPickerButton({ className }: { className?: string }) {
     return (
-        <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-transparent">
-            <Smile className="h-6 w-6" />
+        <Button variant="ghost" size="icon" className={cn("text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full h-10 w-10", className)}>
+            <Smile className="h-5 w-5" />
         </Button>
     )
 }
