@@ -208,52 +208,74 @@ export class WhatsappProcessor {
     }
 
     private async downloadAndSaveMedia(message: WAMessage, type: 'image' | 'video' | 'audio' | 'document' | 'sticker', tenantId: string): Promise<string | null> {
-        try {
-            this.logger.debug(`Downloading ${type} media...`);
+        const maxRetries = 3;
+        const baseDelay = 1000; // 1 segundo
 
-            const buffer = await downloadMediaMessage(
-                message,
-                'buffer',
-                {},
-                {
-                    logger: this.logger as any,
-                    reuploadRequest: (msg) => new Promise((resolve) => resolve(msg))
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                this.logger.debug(`Downloading ${type} media... (attempt ${attempt}/${maxRetries})`);
+
+                const buffer = await downloadMediaMessage(
+                    message,
+                    'buffer',
+                    {},
+                    {
+                        logger: this.logger as any,
+                        reuploadRequest: (msg) => new Promise((resolve) => resolve(msg))
+                    }
+                );
+
+                let mimetype = 'application/octet-stream';
+                let ext = '.bin';
+                let originalName = `whatsapp_media_${Date.now()}`;
+
+                const msgContent = (message.message as any)?.[`${type}Message`];
+
+                if (msgContent) {
+                    mimetype = msgContent.mimetype || mimetype;
+
+                    if (type === 'image') ext = '.jpg';
+                    else if (type === 'video') ext = '.mp4';
+                    else if (type === 'audio') ext = '.ogg';
+                    else if (type === 'sticker') ext = '.webp';
+                    else if (type === 'document') {
+                        originalName = msgContent.fileName || originalName;
+                        ext = path.extname(originalName) || '.pdf';
+                    }
                 }
-            );
 
-            let mimetype = 'application/octet-stream';
-            let ext = '.bin';
-            let originalName = `whatsapp_media_${Date.now()}`;
+                const mockFile = {
+                    filename: type === 'document' ? originalName : `${originalName}${ext}`,
+                    mimetype: mimetype,
+                    toBuffer: async () => buffer
+                };
 
-            const msgContent = (message.message as any)?.[`${type}Message`];
+                const media = await this.storageService.uploadFile(mockFile, tenantId, null, 'messages');
+                this.logger.log(`✅ Media downloaded successfully on attempt ${attempt}: ${media.id}`);
+                return media.id;
 
-            if (msgContent) {
-                mimetype = msgContent.mimetype || mimetype;
+            } catch (error) {
+                const isLastAttempt = attempt === maxRetries;
 
-                if (type === 'image') ext = '.jpg';
-                else if (type === 'video') ext = '.mp4';
-                else if (type === 'audio') ext = '.ogg';
-                else if (type === 'sticker') ext = '.webp';
-                else if (type === 'document') {
-                    originalName = msgContent.fileName || originalName;
-                    ext = path.extname(originalName) || '.pdf';
+                if (isLastAttempt) {
+                    // Última tentativa falhou
+                    this.logger.error(`❌ Media download failed after ${maxRetries} attempts: ${error.message}`);
+                    this.logger.error(`Error stack: ${error.stack}`);
+                    this.logger.debug(`Message key: ${JSON.stringify(message.key)}`);
+                    return null;
+                } else {
+                    // Calcular delay exponencial: 1s, 2s, 4s
+                    const delay = baseDelay * Math.pow(2, attempt - 1);
+                    this.logger.warn(`⚠️ Attempt ${attempt} failed: ${error.message}. Retrying in ${delay}ms...`);
+
+                    // Aguardar antes da próxima tentativa
+                    await new Promise(resolve => setTimeout(resolve, delay));
                 }
             }
-
-            const mockFile = {
-                filename: type === 'document' ? originalName : `${originalName}${ext}`,
-                mimetype: mimetype,
-                toBuffer: async () => buffer
-            };
-
-            const media = await this.storageService.uploadFile(mockFile, tenantId, null);
-            this.logger.debug(`Media saved: ${media.id}`);
-            return media.id;
-
-        } catch (error) {
-            this.logger.error(`Media download failed: ${error.message}`);
-            return null;
         }
+
+        // Nunca deve chegar aqui, mas por segurança
+        return null;
     }
 
     private async findOrCreateContact(tenantId: string, remoteJid: string, pushName: string, channelId: string, isGroup: boolean) {
@@ -276,7 +298,7 @@ export class WhatsappProcessor {
                             filename: `profile_${remoteJid}.jpg`,
                             mimetype: 'image/jpeg',
                             toBuffer: async () => buffer
-                        }, tenantId, null);
+                        }, tenantId, null, 'avatars');
                         profilePicUrl = `/storage/${media.id}/download`;
                     }
                 }

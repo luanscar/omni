@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Param, Delete, Request, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Delete, Request, Req, Query } from '@nestjs/common';
 import { StorageService } from './storage.service';
 import { ApiTags, ApiOperation, ApiResponse, ApiConsumes, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -60,14 +60,15 @@ Faz upload de um arquivo para uso em mensagens.
   @ApiResponse({ status: 400, description: 'Arquivo inválido ou muito grande.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
-  async upload(@Req() req: FastifyRequest, @Request() requestUser: any) {
+  async upload(@Req() req: FastifyRequest, @Request() requestUser: any, @Query('category') category?: string) {
     // Método específico do fastify-multipart
     const file = await req.file();
 
     return this.storageService.uploadFile(
       file,
       requestUser.user.tenantId,
-      requestUser.user.userId
+      requestUser.user.userId,
+      category || 'documents' // Categoria padrão
     );
   }
 
@@ -122,7 +123,7 @@ Faz upload de múltiplos arquivos de uma vez.
   @ApiResponse({ status: 400, description: 'Um ou mais arquivos inválidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
-  async uploadBatch(@Req() req: FastifyRequest, @Request() requestUser: any) {
+  async uploadBatch(@Req() req: FastifyRequest, @Request() requestUser: any, @Query('category') category?: string) {
     const files = req.files();
     const results = [];
 
@@ -130,7 +131,8 @@ Faz upload de múltiplos arquivos de uma vez.
       const media = await this.storageService.uploadFile(
         file,
         requestUser.user.tenantId,
-        requestUser.user.userId
+        requestUser.user.userId,
+        category || 'documents'
       );
       results.push(media);
     }

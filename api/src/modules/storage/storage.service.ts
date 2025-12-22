@@ -24,8 +24,22 @@ export class StorageService implements OnModuleInit {
 
   async onModuleInit() { }
 
-  // Atualizado para aceitar uploaderId nulo (upload de sistema)
-  async uploadFile(file: any, tenantId: string, uploaderId?: string | null) {
+  // Categorias disponíveis para organização
+  private readonly CATEGORIES = {
+    MESSAGES: 'messages',      // Mídias de mensagens WhatsApp
+    AVATARS: 'avatars',        // Fotos de perfil
+    DOCUMENTS: 'documents',    // Documentos gerais
+    EXPORTS: 'exports',        // Relatórios exportados
+    TEMP: 'temp'              // Arquivos temporários
+  } as const;
+
+  // Atualizado para aceitar category e organizar em pastas
+  async uploadFile(
+    file: any,
+    tenantId: string,
+    uploaderId?: string | null,
+    category: string = 'documents' // Categoria padrão
+  ) {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo enviado.');
     }
@@ -34,7 +48,13 @@ export class StorageService implements OnModuleInit {
     const originalName = file.filename || 'file.bin';
     const fileExtension = path.extname(originalName) || '.jpg';
     const fileName = `${uuidv4()}${fileExtension}`;
-    const key = `${tenantId}/${fileName}`;
+
+    // Determinar subcategoria baseada no MIME type
+    const subCategory = this.getSubCategoryByMimeType(file.mimetype);
+
+    // Estrutura: tenant-{uuid}/{category}/{subCategory}/{fileName}
+    // Exemplo: tenant-abc123/messages/images/uuid.jpg
+    const key = `tenant-${tenantId}/${category}/${subCategory}/${fileName}`;
 
     try {
       const buffer = await file.toBuffer();
@@ -56,7 +76,7 @@ export class StorageService implements OnModuleInit {
           size: buffer.length,
           key: key,
           tenantId,
-          uploaderId: uploaderId || null, // Garante null se for undefined
+          uploaderId: uploaderId || null,
         },
       });
 
@@ -65,6 +85,17 @@ export class StorageService implements OnModuleInit {
       console.error('Erro no upload S3:', error);
       throw new InternalServerErrorException('Falha ao fazer upload do arquivo.');
     }
+  }
+
+  // Helper para categorizar arquivo por MIME type
+  private getSubCategoryByMimeType(mimeType: string): string {
+    if (mimeType.startsWith('image/')) return 'images';
+    if (mimeType.startsWith('video/')) return 'videos';
+    if (mimeType.startsWith('audio/')) return 'audios';
+    if (mimeType.includes('pdf') || mimeType.includes('document')) return 'documents';
+    if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'spreadsheets';
+    if (mimeType.startsWith('text/')) return 'text';
+    return 'others';
   }
 
   async findAll(tenantId: string) {
