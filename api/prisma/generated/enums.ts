@@ -67,3 +67,26 @@ export const MessageType = {
 } as const
 
 export type MessageType = (typeof MessageType)[keyof typeof MessageType]
+
+
+export const AuditEventType = {
+  MESSAGE: 'MESSAGE',
+  USER_ACTION: 'USER_ACTION',
+  SYSTEM_EVENT: 'SYSTEM_EVENT',
+  MEDIA_DOWNLOAD: 'MEDIA_DOWNLOAD',
+  AUTH: 'AUTH',
+  DATA_CHANGE: 'DATA_CHANGE',
+  ERROR: 'ERROR'
+} as const
+
+export type AuditEventType = (typeof AuditEventType)[keyof typeof AuditEventType]
+
+
+export const AuditStatus = {
+  SUCCESS: 'SUCCESS',
+  FAILED: 'FAILED',
+  PARTIAL: 'PARTIAL',
+  PENDING: 'PENDING'
+} as const
+
+export type AuditStatus = (typeof AuditStatus)[keyof typeof AuditStatus]

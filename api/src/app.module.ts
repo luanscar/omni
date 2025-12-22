@@ -15,6 +15,7 @@ import { ConversationsModule } from './modules/conversations/conversations.modul
 import { MessagesModule } from './modules/messages/messages.module';
 import { BullModule } from '@nestjs/bull';
 import { EventsModule } from './modules/events/events.module';
+import { AuditModule } from './modules/audit/audit.module';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { EventsModule } from './modules/events/events.module';
         port: Number(process.env.REDIS_PORT) || 6379,
       },
     }),
-    UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule, StorageModule, ConversationsModule, MessagesModule, EventsModule],
+    UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule, StorageModule, ConversationsModule, MessagesModule, EventsModule, AuditModule],
   controllers: [],
   providers: [
     PrismaService,

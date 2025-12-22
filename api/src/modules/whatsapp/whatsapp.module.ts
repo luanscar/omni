@@ -5,13 +5,15 @@ import { BullModule } from '@nestjs/bull'; // <--- Importar
 import { PrismaService } from '../../prisma.service';
 import { WhatsappProcessor } from './whatsapp.processor';
 import { StorageModule } from '../storage/storage.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     BullModule.registerQueue({
       name: 'whatsapp-events',
     }),
-    StorageModule
+    StorageModule,
+    AuditModule,
   ],
   controllers: [WhatsappController],
   providers: [WhatsappService, WhatsappProcessor, PrismaService,],

@@ -7,7 +7,8 @@ import { StorageService } from '../storage/storage.service';
 import { EventsGateway } from '../events/events.gateway';
 import { downloadMediaMessage, WAMessage, getContentType } from '@whiskeysockets/baileys';
 import * as path from 'path';
-import { ConversationStatus, MessageSenderType } from 'prisma/generated/enums';
+import { ConversationStatus, MessageSenderType, AuditStatus } from 'prisma/generated/enums';
+import { AuditService } from '../audit/audit.service';
 
 @Processor('whatsapp-events')
 export class WhatsappProcessor {
@@ -19,6 +20,7 @@ export class WhatsappProcessor {
         private whatsappService: WhatsappService,
         private storageService: StorageService,
         private eventsGateway: EventsGateway,
+        private auditService: AuditService,
     ) { }
 
     @Process('process-message')
@@ -116,6 +118,19 @@ export class WhatsappProcessor {
 
             this.logger.log(`Message saved! ID: ${savedMessage.id} | Type: ${mediaId ? 'Media' : 'Text'} | Is Reply: ${!!quotedMessageId}`);
 
+            // ✅ Log de auditoria - mensagem recebida com sucesso
+            await this.auditService.logMessage({
+                tenantId,
+                messageId: savedMessage.id,
+                action: 'received',
+                details: {
+                    from: remoteJid,
+                    hasMedia: !!mediaId,
+                    isReply: !!quotedMessageId,
+                },
+                status: AuditStatus.SUCCESS,
+            });
+
             this.eventsGateway.emitNewMessage(tenantId, {
                 ...savedMessage,
                 conversationId: conversation.id
@@ -123,6 +138,21 @@ export class WhatsappProcessor {
 
         } catch (error) {
             this.logger.error(`Error processing message: ${error.message}`, error.stack);
+
+            // ❌ Log de auditoria - falha ao processar mensagem
+            await this.auditService.logMessage({
+                tenantId,
+                messageId: message.key.id,
+                action: 'failed',
+                details: {
+                    from: remoteJid,
+                    error: error.message,
+                    stack: error.stack,
+                },
+                status: AuditStatus.FAILED,
+                errorMessage: error.message,
+            });
+
             throw error;
         }
     }
@@ -252,6 +282,16 @@ export class WhatsappProcessor {
 
                 const media = await this.storageService.uploadFile(mockFile, tenantId, null, 'messages');
                 this.logger.log(`✅ Media downloaded successfully on attempt ${attempt}: ${media.id}`);
+
+                // ✅ Log de auditoria - mídia baixada com sucesso
+                await this.auditService.logMediaDownload({
+                    tenantId,
+                    messageId: message.key.id,
+                    mediaType: type,
+                    success: true,
+                    attempts: attempt,
+                });
+
                 return media.id;
 
             } catch (error) {
@@ -262,6 +302,17 @@ export class WhatsappProcessor {
                     this.logger.error(`❌ Media download failed after ${maxRetries} attempts: ${error.message}`);
                     this.logger.error(`Error stack: ${error.stack}`);
                     this.logger.debug(`Message key: ${JSON.stringify(message.key)}`);
+
+                    // ❌ Log de auditoria - falha no download
+                    await this.auditService.logMediaDownload({
+                        tenantId,
+                        messageId: message.key.id,
+                        mediaType: type,
+                        success: false,
+                        attempts: maxRetries,
+                        errorMessage: error.message,
+                    });
+
                     return null;
                 } else {
                     // Calcular delay exponencial: 1s, 2s, 4s

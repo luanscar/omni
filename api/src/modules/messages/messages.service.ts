@@ -2,7 +2,8 @@ import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef 
 import { PrismaService } from '../../prisma.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MessageSenderType, MessageType } from 'prisma/generated/enums';
+import { MessageSenderType, MessageType, AuditStatus } from 'prisma/generated/enums';
+import { AuditService } from '../audit/audit.service';
 
 @Injectable()
 export class MessagesService {
@@ -11,6 +12,7 @@ export class MessagesService {
     // ForwardRef evita dependência circular entre Message <-> Whatsapp
     @Inject(forwardRef(() => WhatsappService))
     private whatsappService: WhatsappService,
+    private auditService: AuditService,
   ) { }
 
   async create(createMessageDto: CreateMessageDto, tenantId: string, userId: string) {
@@ -157,6 +159,19 @@ export class MessagesService {
         // Aqui você poderia atualizar o status da mensagem para "ERRO" se tivesse esse campo
       }
     }
+
+    // ✅ Log de auditoria - mensagem enviada com sucesso
+    await this.auditService.logMessage({
+      tenantId,
+      messageId: message.id,
+      action: 'sent',
+      details: {
+        to: conversation.contact?.phoneNumber,
+        type: type,
+        hasMedia: !!mediaId,
+      },
+      status: AuditStatus.SUCCESS,
+    });
 
     return message;
   }

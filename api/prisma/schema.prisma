@@ -49,6 +49,23 @@ enum MessageType {
   REACTION
 }
 
+enum AuditEventType {
+  MESSAGE // Mensagens WhatsApp
+  USER_ACTION // Ações de usuários
+  SYSTEM_EVENT // Eventos do sistema
+  MEDIA_DOWNLOAD // Download de mídias
+  AUTH // Autenticação
+  DATA_CHANGE // Alteração de dados
+  ERROR // Erros gerais
+}
+
+enum AuditStatus {
+  SUCCESS
+  FAILED
+  PARTIAL // Parcialmente executado
+  PENDING
+}
+
 // --- CORE SAAS MODELS ---
 
 model Tenant {
@@ -65,6 +82,7 @@ model Tenant {
   teams         Team[]
   medias        Media[]
   conversations Conversation[]
+  auditLogs     AuditLog[]
 
   @@map("tenants")
 }
@@ -87,8 +105,9 @@ model User {
   assignedConversations Conversation[] @relation("AssignedAgent")
   sentMessages          Message[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  auditLogs AuditLog[]
 
   @@map("users")
 }
@@ -260,4 +279,42 @@ model Message {
   createdAt DateTime @default(now())
 
   @@map("messages")
+}
+
+// --- AUDITORIA ---
+
+model AuditLog {
+  id String @id @default(uuid())
+
+  // Identificação
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Tipo de evento
+  eventType AuditEventType
+  module    String // whatsapp, messages, users, auth, etc
+  action    String // message.received, message.sent, user.login, etc
+
+  // Detalhes
+  resource String? // ID do recurso afetado (messageId, userId, etc)
+  details  Json? // Dados completos do evento
+
+  // Status
+  status       AuditStatus @default(SUCCESS)
+  errorMessage String? // Se falhou, detalhe do erro
+
+  // Metadata
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([eventType, status])
+  @@index([module, action])
+  @@index([resource])
+  @@map("audit_logs")
 }
