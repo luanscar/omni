@@ -200,4 +200,139 @@ export class MessagesService {
       orderBy: { createdAt: 'asc' }
     });
   }
+
+  async forwardMessage(
+    forwardDto: { messageId: string; targetConversationIds: string[] },
+    tenantId: string,
+    userId: string
+  ) {
+    const { messageId, targetConversationIds } = forwardDto;
+
+    // 1. Buscar mensagem original (verificar permissão de tenant)
+    const originalMessage = await this.prisma.message.findFirst({
+      where: {
+        id: messageId,
+        conversation: { tenantId }
+      },
+      include: { media: true, conversation: true }
+    });
+
+    if (!originalMessage) {
+      throw new NotFoundException('Mensagem não encontrada ou sem permissão');
+    }
+
+    // 2. Para cada conversa destino, criar cópia
+    const forwardedMessages = [];
+
+    for (const conversationId of targetConversationIds) {
+      // Verificar permissão da conversa de destino
+      const targetConversation = await this.prisma.conversation.findFirst({
+        where: { id: conversationId, tenantId },
+        include: { channel: true, contact: true }
+      });
+
+      if (!targetConversation) {
+        continue; // Skip conversas inválidas
+      }
+
+      // Criar nova mensagem copiando conteúdo
+      const newMessage = await this.prisma.message.create({
+        data: {
+          conversationId,
+          type: originalMessage.type,
+          content: originalMessage.content,
+          mediaId: originalMessage.mediaId, // Reutiliza mesma mídia
+          metadata: originalMessage.metadata,
+          senderType: MessageSenderType.USER,
+          senderUserId: userId,
+          isForwarded: true,
+          forwardedFromId: messageId,
+        },
+        include: {
+          media: true,
+          forwardedFrom: {
+            select: {
+              id: true,
+              content: true,
+              senderUser: { select: { name: true } },
+              senderContact: { select: { name: true } }
+            }
+          }
+        }
+      });
+
+      //Enviar para WhatsApp
+      try {
+        await this.whatsappService.sendMessage(
+          targetConversation.channel.id,
+          {
+            to: targetConversation.contact.phoneNumber,
+            type: originalMessage.type,
+            content: originalMessage.content,
+            mediaId: originalMessage.mediaId,
+            tenantId,
+          }
+        );
+      } catch (error) {
+        console.error(`[MessagesService] Erro ao encaminhar mensagem ${newMessage.id}:`, error);
+      }
+
+      forwardedMessages.push(newMessage);
+    }
+
+    // Auditoria
+    await this.auditService.log({
+      tenantId,
+      userId,
+      eventType: 'USER_ACTION' as any,
+      module: 'messages',
+      action: 'message.forward',
+      resource: messageId,
+      details: {
+        targetConversations: targetConversationIds,
+        forwardedCount: forwardedMessages.length
+      },
+      status: 'SUCCESS' as any,
+    });
+
+    return {
+      success: true,
+      forwardedCount: forwardedMessages.length,
+      messages: forwardedMessages
+    };
+  }
+
+  async forwardBatch(
+    forwardBatchDto: { messageIds: string[]; targetConversationIds: string[] },
+    tenantId: string,
+    userId: string
+  ) {
+    const results = [];
+    let totalForwarded = 0;
+
+    for (const messageId of forwardBatchDto.messageIds) {
+      try {
+        const result = await this.forwardMessage({
+          messageId,
+          targetConversationIds: forwardBatchDto.targetConversationIds
+        }, tenantId, userId);
+
+        results.push(result);
+        totalForwarded += result.forwardedCount;
+      } catch (error) {
+        console.error(`Error forwarding message ${messageId}:`, error);
+        results.push({
+          success: false,
+          messageId,
+          error: error.message
+        });
+      }
+    }
+
+    return {
+      success: true,
+      totalForwarded,
+      details: results
+    };
+  }
 }

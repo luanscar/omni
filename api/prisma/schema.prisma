@@ -275,6 +275,12 @@ model Message {
   quotedMessage   Message?  @relation("QuotedMessage", fields: [quotedMessageId], references: [id])
   replies         Message[] @relation("QuotedMessage")
 
+  // --- SUPORTE A ENCAMINHAMENTO ---
+  isForwarded     Boolean   @default(false)
+  forwardedFromId String?
+  forwardedFrom   Message?  @relation("ForwardedMessage", fields: [forwardedFromId], references: [id], onDelete: SetNull)
+  forwardedTo     Message[] @relation("ForwardedMessage")
+
   read      Boolean  @default(false)
   createdAt DateTime @default(now())
 
