@@ -260,6 +260,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                 ref={fileInputRef} 
                 className="hidden" 
                 onChange={handleFileSelect}
+                multiple
             />
 
             <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full">
@@ -309,15 +310,15 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
 
       {/* Multi-file Preview Overlay */}
       {pendingFiles.length > 0 && (
-          <div className="fixed inset-0 z-50 bg-[#0b141a] flex flex-col animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-50 bg-background flex flex-col animate-in fade-in duration-200">
               {/* Top Bar */}
               <div className="flex items-center justify-between p-4">
-                  <Button variant="ghost" size="icon" onClick={() => setPendingFiles([])} className="text-white hover:bg-white/10 rounded-full">
+                  <Button variant="ghost" size="icon" onClick={() => setPendingFiles([])} className="text-foreground hover:bg-muted rounded-full">
                       <X className="h-6 w-6" />
                   </Button>
-                  <div className="text-white text-center">
+                  <div className="text-foreground text-center">
                       <div className="font-semibold">{pendingFiles[previewIndex]?.name}</div>
-                      <div className="text-xs opacity-70">
+                      <div className="text-xs text-muted-foreground">
                           {pendingFiles[previewIndex]?.type.startsWith('image/') ? 'Imagem' : 
                            pendingFiles[previewIndex]?.type.startsWith('video/') ? 'Vídeo' : 'Documento'}
                       </div>
@@ -340,19 +341,19 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                         controls
                       />
                   ) : (
-                      <div className="flex flex-col items-center gap-4 text-white">
-                          <FileText className="h-24 w-24 opacity-50" />
-                          <span>{pendingFiles[previewIndex]?.name}</span>
+                      <div className="flex flex-col items-center gap-4 text-foreground">
+                          <FileText className="h-24 w-24 opacity-20" />
+                          <span className="text-muted-foreground">{pendingFiles[previewIndex]?.name}</span>
                       </div>
                   )}
               </div>
 
               {/* Bottom Caption & Thumbnails */}
-              <div className="bg-[#111b21] p-4 flex flex-col gap-4">
+              <div className="bg-muted/30 p-4 flex flex-col gap-4 border-t">
                   {/* Caption Input */}
-                  <div className="max-w-4xl mx-auto w-full bg-[#202c33] rounded-lg flex items-center px-4 py-2 border border-white/5">
+                  <div className="max-w-4xl mx-auto w-full bg-background rounded-lg flex items-center px-4 py-2 border">
                       <input 
-                        className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder:text-muted-foreground mr-2"
+                        className="flex-1 bg-transparent border-none focus:ring-0 text-foreground placeholder:text-muted-foreground mr-2"
                         placeholder="Digite uma mensagem"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
@@ -373,15 +374,15 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                              key={i} 
                              className={cn(
                                "relative w-14 h-14 rounded-md overflow-hidden border-2 cursor-pointer shrink-0 transition-all",
-                               previewIndex === i ? "border-[#06cf9c] scale-110" : "border-transparent opacity-60 hover:opacity-100"
+                               previewIndex === i ? "border-primary scale-110" : "border-transparent opacity-60 hover:opacity-100"
                              )}
                              onClick={() => setPreviewIndex(i)}
                            >
                                {file.type.startsWith('image/') ? (
                                    <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
                                ) : (
-                                   <div className="w-full h-full bg-[#2a3942] flex items-center justify-center">
-                                       <FileText className="h-6 w-6 text-white/50" />
+                                   <div className="w-full h-full bg-muted flex items-center justify-center">
+                                       <FileText className="h-6 w-6 text-muted-foreground" />
                                    </div>
                                )}
                                <button 
@@ -397,7 +398,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                        ))}
 
                        <button 
-                         className="w-14 h-14 rounded-md border-2 border-dashed border-white/20 flex items-center justify-center text-white/50 hover:border-white/40 hover:text-white transition-all shrink-0"
+                         className="w-14 h-14 rounded-md border-2 border-dashed border-input flex items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-all shrink-0"
                          onClick={() => fileInputRef.current?.click()}
                        >
                            <Paperclip className="h-6 w-6" />
@@ -407,12 +408,12 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                   {/* Send Button */}
                   <div className="flex justify-end max-w-6xl mx-auto w-full">
                       <Button 
-                        className="h-14 w-14 rounded-full bg-[#00a884] hover:bg-[#06cf9c] text-white shadow-lg relative"
+                        className="h-14 w-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg relative"
                         onClick={handleBatchSend}
                         disabled={isPending || isUploadingBatch}
                       >
                          {isUploadingBatch ? <Loader2 className="animate-spin" /> : <Send className="h-6 w-6 ml-1" />}
-                         <div className="absolute -top-1 -right-1 bg-white text-black text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-[#111b21]">
+                         <div className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-background">
                              {pendingFiles.length}
                          </div>
                       </Button>
