@@ -3,7 +3,6 @@ import {
   WebSocketServer,
   OnGatewayConnection,
   OnGatewayDisconnect,
-  SubscribeMessage,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { JwtService } from '@nestjs/jwt';
@@ -20,7 +19,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('EventsGateway');
 
-  constructor(private jwtService: JwtService) { }
+  constructor(private jwtService: JwtService) {}
 
   async handleConnection(client: Socket) {
     try {

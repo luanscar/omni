@@ -2,7 +2,13 @@ import { Controller, Get, Post, Body, Param, Request } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { BatchMessageDto } from './dto/batch-message.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 import { Message } from './entities/message.entity';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from 'prisma/generated/enums';
@@ -11,7 +17,7 @@ import { UserRole } from 'prisma/generated/enums';
 @ApiBearerAuth()
 @Controller('messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) { }
+  constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
@@ -82,15 +88,26 @@ export class MessagesController {
 }
 \`\`\`
 Resultado: "*Nome do Agente:*\\nMensagem assinada"
-    `
+    `,
   })
-  @ApiResponse({ status: 201, description: 'Mensagem salva e enfileirada para envio.', type: Message })
-  @ApiResponse({ status: 400, description: 'Dados inválidos ou mídia não encontrada.' })
+  @ApiResponse({
+    status: 201,
+    description: 'Mensagem salva e enfileirada para envio.',
+    type: Message,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados inválidos ou mídia não encontrada.',
+  })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
   @ApiResponse({ status: 404, description: 'Conversa não encontrada.' })
   create(@Body() createMessageDto: CreateMessageDto, @Request() req) {
-    return this.messagesService.create(createMessageDto, req.user.tenantId, req.user.userId);
+    return this.messagesService.create(
+      createMessageDto,
+      req.user.tenantId,
+      req.user.userId,
+    );
   }
 
   @Post('batch')
@@ -127,9 +144,13 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
 **Fluxo completo:**
 1. Upload múltiplos arquivos: POST /storage/upload/batch
 2. Enviar múltiplas mensagens: POST /messages/batch
-    `
+    `,
   })
-  @ApiResponse({ status: 201, description: 'Mensagens enviadas com sucesso. Retorna array de mensagens.', type: [Message] })
+  @ApiResponse({
+    status: 201,
+    description: 'Mensagens enviadas com sucesso. Retorna array de mensagens.',
+    type: [Message],
+  })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
@@ -139,9 +160,12 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
 
     for (const messageDto of batchDto.messages) {
       const message = await this.messagesService.create(
-        { ...messageDto, conversationId: batchDto.conversationId } as CreateMessageDto,
+        {
+          ...messageDto,
+          conversationId: batchDto.conversationId,
+        } as CreateMessageDto,
         req.user.tenantId,
-        req.user.userId
+        req.user.userId,
       );
       results.push(message);
     }
@@ -152,19 +176,30 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
   @Get('conversation/:conversationId')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({ summary: 'Listar histórico de mensagens' })
-  @ApiResponse({ status: 200, description: 'Histórico retornado com sucesso.', type: [Message] })
+  @ApiResponse({
+    status: 200,
+    description: 'Histórico retornado com sucesso.',
+    type: [Message],
+  })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
   @ApiResponse({ status: 404, description: 'Conversa não encontrada.' })
-  findByConversation(@Param('conversationId') conversationId: string, @Request() req) {
-    return this.messagesService.findByConversation(conversationId, req.user.tenantId);
+  findByConversation(
+    @Param('conversationId') conversationId: string,
+    @Request() req,
+  ) {
+    return this.messagesService.findByConversation(
+      conversationId,
+      req.user.tenantId,
+    );
   }
 
   @Post('forward')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({
     summary: 'Encaminhar mensagem',
-    description: 'Encaminha uma mensagem existente para uma ou mais conversas (máx 10)'
+    description:
+      'Encaminha uma mensagem existente para uma ou mais conversas (máx 10)',
   })
   @ApiBody({
     type: 'ForwardMessageDto',
@@ -173,10 +208,10 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
         summary: 'Encaminhar para 2 conversas',
         value: {
           messageId: 'abc-123-def-456',
-          targetConversationIds: ['conv-1', 'conv-2']
-        }
-      }
-    }
+          targetConversationIds: ['conv-1', 'conv-2'],
+        },
+      },
+    },
   })
   @ApiResponse({ status: 201, description: 'Mensagem encaminhada com sucesso' })
   @ApiResponse({ status: 404, description: 'Mensagem original não encontrada' })
@@ -184,7 +219,7 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
     return this.messagesService.forwardMessage(
       forwardDto,
       req.user.tenantId,
-      req.user.userId
+      req.user.userId,
     );
   }
 
@@ -192,7 +227,8 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({
     summary: 'Encaminhar múltiplas mensagens',
-    description: 'Encaminha várias mensagens (máx 50) para várias conversas (máx 10)'
+    description:
+      'Encaminha várias mensagens (máx 50) para várias conversas (máx 10)',
   })
   @ApiBody({
     type: 'ForwardBatchDto',
@@ -201,17 +237,20 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
         summary: 'Encaminhar 3 mensagens para 2 conversas',
         value: {
           messageIds: ['msg-1', 'msg-2', 'msg-3'],
-          targetConversationIds: ['conv-x', 'conv-y']
-        }
-      }
-    }
+          targetConversationIds: ['conv-x', 'conv-y'],
+        },
+      },
+    },
   })
-  @ApiResponse({ status: 201, description: 'Mensagens encaminhadas com sucesso' })
+  @ApiResponse({
+    status: 201,
+    description: 'Mensagens encaminhadas com sucesso',
+  })
   async forwardBatch(@Body() forwardBatchDto: any, @Request() req) {
     return this.messagesService.forwardBatch(
       forwardBatchDto,
       req.user.tenantId,
-      req.user.userId
+      req.user.userId,
     );
   }
 }

@@ -1,28 +1,42 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Req,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { Public } from 'src/common/decorators/public.decorator';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuditService } from '../audit/audit.service';
 import { AuditStatus, AuditEventType } from 'prisma/generated/enums';
 import { FastifyRequest } from 'fastify';
 
 @ApiTags('Auth')
-
 @ApiBearerAuth()
 @Controller('auth')
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly auditService: AuditService,
-  ) { }
+  ) {}
 
   @Post('login')
   @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Realizar login' })
   @ApiResponse({ status: 200, description: 'Login realizado com sucesso.' })
-  @ApiResponse({ status: 401, description: 'Credenciais inválidas ou não autorizado.' })
+  @ApiResponse({
+    status: 401,
+    description: 'Credenciais inválidas ou não autorizado.',
+  })
   async login(@Body() loginDto: LoginDto, @Req() req: FastifyRequest) {
     try {
       const result = await this.authService.login(loginDto);

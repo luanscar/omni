@@ -1,4 +1,10 @@
-import { Injectable, Logger, OnModuleInit, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
@@ -7,7 +13,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   fetchLatestBaileysVersion,
   WASocket,
-  AnyMessageContent
+  AnyMessageContent,
 } from '@whiskeysockets/baileys';
 import * as qrcode from 'qrcode';
 import * as fs from 'fs';
@@ -38,8 +44,8 @@ export class WhatsappService implements OnModuleInit {
     private prisma: PrismaService,
     @InjectQueue('whatsapp-events') private queue: Queue,
     @Inject(forwardRef(() => StorageService))
-    private storageService: StorageService
-  ) { }
+    private storageService: StorageService,
+  ) {}
 
   async onModuleInit() {
     this.ensureSessionsDir();
@@ -51,10 +57,15 @@ export class WhatsappService implements OnModuleInit {
   }
 
   // --- IMPLEMENTAÇÃO DO ENVIO ---
-  async sendMessage(channelId: string, options: SendMessageOptions): Promise<string | null> {
+  async sendMessage(
+    channelId: string,
+    options: SendMessageOptions,
+  ): Promise<string | null> {
     const socket = this.getSocket(channelId);
     if (!socket) {
-      throw new Error(`Sessão do WhatsApp não encontrada ou desconectada para o canal ${channelId}.`);
+      throw new Error(
+        `Sessão do WhatsApp não encontrada ou desconectada para o canal ${channelId}.`,
+      );
     }
 
     let jid = options.to;
@@ -74,9 +85,13 @@ export class WhatsappService implements OnModuleInit {
       case MessageType.AUDIO:
       case MessageType.DOCUMENT:
       case MessageType.STICKER:
-        if (!options.mediaId) throw new Error('MediaID é obrigatório para envio de mídia.');
+        if (!options.mediaId)
+          throw new Error('MediaID é obrigatório para envio de mídia.');
 
-        const mediaInfo = await this.storageService.getDownloadUrl(options.mediaId, options.tenantId || 'SYSTEM');
+        const mediaInfo = await this.storageService.getDownloadUrl(
+          options.mediaId,
+          options.tenantId || 'SYSTEM',
+        );
         const mediaObj = { url: mediaInfo.url };
 
         if (options.type === MessageType.IMAGE) {
@@ -84,27 +99,32 @@ export class WhatsappService implements OnModuleInit {
         } else if (options.type === MessageType.VIDEO) {
           payload = { video: mediaObj, caption: options.content };
         } else if (options.type === MessageType.AUDIO) {
-          payload = { audio: mediaObj, mimetype: mediaInfo.mimeType || 'audio/mp4', ptt: true };
+          payload = {
+            audio: mediaObj,
+            mimetype: mediaInfo.mimeType || 'audio/mp4',
+            ptt: true,
+          };
         } else if (options.type === MessageType.STICKER) {
           payload = { sticker: mediaObj };
         } else {
           payload = {
             document: mediaObj,
             mimetype: mediaInfo.mimeType || 'application/octet-stream',
-            fileName: mediaInfo.originalName || options.content || 'arquivo'
+            fileName: mediaInfo.originalName || options.content || 'arquivo',
           };
         }
         break;
 
       case MessageType.LOCATION:
-        if (!options.location) throw new Error('Dados de localização obrigatórios.');
+        if (!options.location)
+          throw new Error('Dados de localização obrigatórios.');
         payload = {
           location: {
             degreesLatitude: options.location.degreesLatitude,
             degreesLongitude: options.location.degreesLongitude,
             name: options.location.name,
-            address: options.location.address
-          }
+            address: options.location.address,
+          },
         };
         break;
 
@@ -113,8 +133,8 @@ export class WhatsappService implements OnModuleInit {
         payload = {
           contacts: {
             displayName: options.contact.displayName,
-            contacts: [{ vcard: options.contact.vcard }]
-          }
+            contacts: [{ vcard: options.contact.vcard }],
+          },
         };
         break;
 
@@ -126,9 +146,9 @@ export class WhatsappService implements OnModuleInit {
             key: {
               remoteJid: jid,
               id: options.reaction.key,
-              fromMe: false
-            }
-          }
+              fromMe: false,
+            },
+          },
         };
         break;
 
@@ -145,9 +165,9 @@ export class WhatsappService implements OnModuleInit {
           remoteJid: jid,
           id: options.replyToProviderId,
           fromMe: false,
-          participant: jid
+          participant: jid,
         },
-        message: { conversation: "..." }
+        message: { conversation: '...' },
       };
 
       quoteOptions = { quoted: quotedMsgStub };
@@ -178,7 +198,9 @@ export class WhatsappService implements OnModuleInit {
 
   async startSession(channelId: string, tenantId?: string) {
     if (!tenantId) {
-      const channel = await this.prisma.channel.findUnique({ where: { id: channelId } });
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
       tenantId = channel?.tenantId;
     }
 
@@ -209,20 +231,28 @@ export class WhatsappService implements OnModuleInit {
         this.connectionStatus.set(channelId, 'QRCODE_READY');
       }
       if (connection === 'close') {
-        const shouldReconnect = (lastDisconnect?.error as any)?.output?.statusCode !== DisconnectReason.loggedOut;
+        const shouldReconnect =
+          (lastDisconnect?.error as any)?.output?.statusCode !==
+          DisconnectReason.loggedOut;
         this.cleanUpSession(channelId);
         if (shouldReconnect) {
           setTimeout(() => this.startSession(channelId, tenantId), 3000);
         } else {
           this.connectionStatus.set(channelId, 'DISCONNECTED');
-          await this.prisma.channel.update({ where: { id: channelId }, data: { active: false, identifier: null } });
+          await this.prisma.channel.update({
+            where: { id: channelId },
+            data: { active: false, identifier: null },
+          });
         }
       } else if (connection === 'open') {
         this.connectionStatus.set(channelId, 'CONNECTED');
         this.qrCodes.delete(channelId);
         const userJid = socket.user?.id ? socket.user.id.split(':')[0] : null;
         if (userJid) {
-          await this.prisma.channel.update({ where: { id: channelId }, data: { identifier: userJid, active: true } });
+          await this.prisma.channel.update({
+            where: { id: channelId },
+            data: { identifier: userJid, active: true },
+          });
         }
       }
     });
@@ -230,14 +260,18 @@ export class WhatsappService implements OnModuleInit {
     socket.ev.on('messages.upsert', async (m) => {
       if (m.type === 'notify') {
         for (const msg of m.messages) {
-          await this.queue.add('process-message', {
-            message: msg,
-            channelId: channelId,
-            tenantId: tenantId
-          }, {
-            attempts: 3,
-            backoff: 5000
-          });
+          await this.queue.add(
+            'process-message',
+            {
+              message: msg,
+              channelId: channelId,
+              tenantId: tenantId,
+            },
+            {
+              attempts: 3,
+              backoff: 5000,
+            },
+          );
         }
       }
     });
@@ -259,9 +293,13 @@ export class WhatsappService implements OnModuleInit {
       await socket.logout();
       this.cleanUpSession(channelId);
       const authPath = path.join(process.cwd(), 'sessions', channelId);
-      if (fs.existsSync(authPath)) fs.rmSync(authPath, { recursive: true, force: true });
+      if (fs.existsSync(authPath))
+        fs.rmSync(authPath, { recursive: true, force: true });
       this.connectionStatus.set(channelId, 'DISCONNECTED');
-      await this.prisma.channel.update({ where: { id: channelId }, data: { active: false, identifier: null } });
+      await this.prisma.channel.update({
+        where: { id: channelId },
+        data: { active: false, identifier: null },
+      });
       return { status: 'LOGGED_OUT' };
     }
     throw new Error('Session not found');

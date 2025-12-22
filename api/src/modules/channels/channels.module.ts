@@ -7,4 +7,4 @@ import { PrismaService } from 'src/prisma.service';
   controllers: [ChannelsController],
   providers: [ChannelsService, PrismaService],
 })
-export class ChannelsModule { }
+export class ChannelsModule {}

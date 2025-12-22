@@ -5,7 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class TenantsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(data: CreateTenantDto) {
     const existing = await this.prisma.tenant.findUnique({

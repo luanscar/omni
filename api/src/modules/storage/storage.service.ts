@@ -1,5 +1,16 @@
-import { Injectable, InternalServerErrorException, NotFoundException, BadRequestException, OnModuleInit } from '@nestjs/common';
-import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3';
+import {
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+  BadRequestException,
+  OnModuleInit,
+} from '@nestjs/common';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { PrismaService } from '../../prisma.service';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,15 +33,15 @@ export class StorageService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() { }
+  async onModuleInit() {}
 
   // Categorias disponíveis para organização
   private readonly CATEGORIES = {
-    MESSAGES: 'messages',      // Mídias de mensagens WhatsApp
-    AVATARS: 'avatars',        // Fotos de perfil
-    DOCUMENTS: 'documents',    // Documentos gerais
-    EXPORTS: 'exports',        // Relatórios exportados
-    TEMP: 'temp'              // Arquivos temporários
+    MESSAGES: 'messages', // Mídias de mensagens WhatsApp
+    AVATARS: 'avatars', // Fotos de perfil
+    DOCUMENTS: 'documents', // Documentos gerais
+    EXPORTS: 'exports', // Relatórios exportados
+    TEMP: 'temp', // Arquivos temporários
   } as const;
 
   // Atualizado para aceitar category e organizar em pastas
@@ -38,7 +49,7 @@ export class StorageService implements OnModuleInit {
     file: any,
     tenantId: string,
     uploaderId?: string | null,
-    category: string = 'documents' // Categoria padrão
+    category: string = 'documents', // Categoria padrão
   ) {
     if (!file) {
       throw new BadRequestException('Nenhum arquivo enviado.');
@@ -83,7 +94,9 @@ export class StorageService implements OnModuleInit {
       return media;
     } catch (error) {
       console.error('Erro no upload S3:', error);
-      throw new InternalServerErrorException('Falha ao fazer upload do arquivo.');
+      throw new InternalServerErrorException(
+        'Falha ao fazer upload do arquivo.',
+      );
     }
   }
 
@@ -92,8 +105,10 @@ export class StorageService implements OnModuleInit {
     if (mimeType.startsWith('image/')) return 'images';
     if (mimeType.startsWith('video/')) return 'videos';
     if (mimeType.startsWith('audio/')) return 'audios';
-    if (mimeType.includes('pdf') || mimeType.includes('document')) return 'documents';
-    if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'spreadsheets';
+    if (mimeType.includes('pdf') || mimeType.includes('document'))
+      return 'documents';
+    if (mimeType.includes('spreadsheet') || mimeType.includes('excel'))
+      return 'spreadsheets';
     if (mimeType.startsWith('text/')) return 'text';
     return 'others';
   }
@@ -126,8 +141,11 @@ export class StorageService implements OnModuleInit {
         Key: media.key,
       });
 
-      const url = await getSignedUrl(this.s3Client, command, { expiresIn: 3600 });
+      const url = await getSignedUrl(this.s3Client, command, {
+        expiresIn: 3600,
+      });
       return { url, ...media };
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       throw new InternalServerErrorException('Erro ao gerar URL de download.');
     }

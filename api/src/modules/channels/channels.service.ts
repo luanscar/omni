@@ -5,8 +5,7 @@ import { PrismaService } from 'src/prisma.service';
 
 @Injectable()
 export class ChannelsService {
-  constructor(private prisma: PrismaService) { }
-
+  constructor(private prisma: PrismaService) {}
 
   async create(createChannelDto: CreateChannelDto, tenantId: string) {
     return this.prisma.channel.create({
@@ -35,7 +34,11 @@ export class ChannelsService {
     return channel;
   }
 
-  async update(id: string, updateChannelDto: UpdateChannelDto, tenantId: string) {
+  async update(
+    id: string,
+    updateChannelDto: UpdateChannelDto,
+    tenantId: string,
+  ) {
     // Verifica existência antes de atualizar
     await this.findOne(id, tenantId);
 

@@ -36,4 +36,4 @@ import { AuditModule } from '../audit/audit.module';
   controllers: [AuthController],
   providers: [AuthService, LocalStrategy, JwtStrategy],
 })
-export class AuthModule { }
+export class AuthModule {}

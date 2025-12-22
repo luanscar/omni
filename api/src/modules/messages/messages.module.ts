@@ -10,4 +10,4 @@ import { AuditModule } from '../audit/audit.module';
   controllers: [MessagesController],
   providers: [MessagesService, PrismaService],
 })
-export class MessagesModule { }
+export class MessagesModule {}

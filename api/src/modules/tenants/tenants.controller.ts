@@ -10,7 +10,12 @@ import {
 import { TenantsService } from './tenants.service';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { Tenant } from './entities/tenant.entity';
 
@@ -18,11 +23,15 @@ import { Tenant } from './entities/tenant.entity';
 @ApiBearerAuth()
 @Controller('tenants')
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) { }
+  constructor(private readonly tenantsService: TenantsService) {}
 
   @Post()
   @ApiOperation({ summary: 'Criar um novo Tenant (Empresa)' })
-  @ApiResponse({ status: 201, description: 'Tenant criado com sucesso.', type: Tenant })
+  @ApiResponse({
+    status: 201,
+    description: 'Tenant criado com sucesso.',
+    type: Tenant,
+  })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
@@ -33,7 +42,11 @@ export class TenantsController {
   @Get()
   @Roles()
   @ApiOperation({ summary: 'Listar todos os Tenants' })
-  @ApiResponse({ status: 200, description: 'Lista de Tenants retornada com sucesso.', type: [Tenant] })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de Tenants retornada com sucesso.',
+    type: [Tenant],
+  })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   findAll() {
     return this.tenantsService.findAll();
@@ -52,7 +65,11 @@ export class TenantsController {
   @Patch(':id')
   @Roles()
   @ApiOperation({ summary: 'Atualizar um Tenant' })
-  @ApiResponse({ status: 200, description: 'Tenant atualizado com sucesso.', type: Tenant })
+  @ApiResponse({
+    status: 200,
+    description: 'Tenant atualizado com sucesso.',
+    type: Tenant,
+  })
   @ApiResponse({ status: 400, description: 'Dados inválidos.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'Tenant não encontrado.' })
@@ -65,7 +82,10 @@ export class TenantsController {
   @ApiOperation({ summary: 'Remover um Tenant' })
   @ApiResponse({ status: 200, description: 'Tenant removido com sucesso.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 403, description: 'Proibido - Apenas ADMIN ou MANAGER.' })
+  @ApiResponse({
+    status: 403,
+    description: 'Proibido - Apenas ADMIN ou MANAGER.',
+  })
   @ApiResponse({ status: 404, description: 'Tenant não encontrado.' })
   remove(@Param('id') id: string) {
     return this.tenantsService.remove(id);

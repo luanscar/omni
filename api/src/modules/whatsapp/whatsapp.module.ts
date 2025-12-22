@@ -16,7 +16,7 @@ import { AuditModule } from '../audit/audit.module';
     AuditModule,
   ],
   controllers: [WhatsappController],
-  providers: [WhatsappService, WhatsappProcessor, PrismaService,],
+  providers: [WhatsappService, WhatsappProcessor, PrismaService],
   exports: [WhatsappService, BullModule],
 })
-export class WhatsappModule { }
+export class WhatsappModule {}

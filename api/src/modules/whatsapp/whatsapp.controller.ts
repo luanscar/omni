@@ -1,16 +1,25 @@
-import { Controller, Get, Post, Param, HttpStatus, Res, } from '@nestjs/common';
+import { Controller, Get, Post, Param, HttpStatus, Res } from '@nestjs/common';
 import { WhatsappService } from './whatsapp.service';
-import { ApiBearerAuth, ApiOperation, ApiProduces, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiProduces,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 @ApiTags('Whatsapp')
 @ApiBearerAuth()
 @Controller('whatsapp')
 export class WhatsappController {
-  constructor(private readonly whatsappService: WhatsappService) { }
+  constructor(private readonly whatsappService: WhatsappService) {}
 
   @Post(':channelId/start')
   @ApiOperation({ summary: 'Inicia uma sessão e gera o QR Code' })
-  @ApiResponse({ status: 201, description: 'Sessão iniciada (QR Code gerado ou status retornado).' })
+  @ApiResponse({
+    status: 201,
+    description: 'Sessão iniciada (QR Code gerado ou status retornado).',
+  })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'Canal não encontrado.' })
   async startSession(@Param('channelId') channelId: string) {
@@ -28,22 +37,27 @@ export class WhatsappController {
       'image/png': {
         schema: {
           type: 'string',
-          format: 'binary'
-        }
-      }
-    }
+          format: 'binary',
+        },
+      },
+    },
   })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
-  @ApiResponse({ status: 404, description: 'QR Code não disponível ou sessão conectada.' })
+  @ApiResponse({
+    status: 404,
+    description: 'QR Code não disponível ou sessão conectada.',
+  })
   async getQrImage(@Param('channelId') channelId: string, @Res() res) {
     const { qrCode } = this.whatsappService.getSessionStatus(channelId);
 
     if (!qrCode) {
-      return res.status(HttpStatus.NOT_FOUND).send({ message: 'QR Code não disponível' });
+      return res
+        .status(HttpStatus.NOT_FOUND)
+        .send({ message: 'QR Code não disponível' });
     }
 
     // Remove o cabeçalho do Data URL para pegar apenas os dados binários
-    const base64Data = qrCode.replace(/^data:image\/png;base64,/, "");
+    const base64Data = qrCode.replace(/^data:image\/png;base64,/, '');
     const buffer = Buffer.from(base64Data, 'base64');
 
     // Define o header para o navegador/Scalar entender que é uma imagem
@@ -53,9 +67,10 @@ export class WhatsappController {
     res.send(buffer);
   }
 
-
   @Get(':channelId/status')
-  @ApiOperation({ summary: 'Retorna o status da conexão e o QR Code (se houver)' })
+  @ApiOperation({
+    summary: 'Retorna o status da conexão e o QR Code (se houver)',
+  })
   @ApiResponse({ status: 200, description: 'Status retornado com sucesso.' })
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 404, description: 'Canal não encontrado.' })

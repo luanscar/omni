@@ -1,8 +1,18 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Inject,
+  forwardRef,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { WhatsappService } from '../whatsapp/whatsapp.service';
-import { MessageSenderType, MessageType, AuditStatus } from 'prisma/generated/enums';
+import {
+  MessageSenderType,
+  MessageType,
+  AuditStatus,
+} from 'prisma/generated/enums';
 import { AuditService } from '../audit/audit.service';
 
 @Injectable()
@@ -13,15 +23,29 @@ export class MessagesService {
     @Inject(forwardRef(() => WhatsappService))
     private whatsappService: WhatsappService,
     private auditService: AuditService,
-  ) { }
+  ) {}
 
-  async create(createMessageDto: CreateMessageDto, tenantId: string, userId: string) {
-    const { conversationId, type, content, mediaId, location, contact, reaction, replyToId, signMessage } = createMessageDto;
+  async create(
+    createMessageDto: CreateMessageDto,
+    tenantId: string,
+    userId: string,
+  ) {
+    const {
+      conversationId,
+      type,
+      content,
+      mediaId,
+      location,
+      contact,
+      reaction,
+      replyToId,
+      signMessage,
+    } = createMessageDto;
 
     // 1. Verificar conversa e permissão
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, tenantId },
-      include: { channel: true, contact: true }
+      include: { channel: true, contact: true },
     });
 
     if (!conversation) {
@@ -32,11 +56,13 @@ export class MessagesService {
     let quotedMessage = null;
     if (replyToId) {
       quotedMessage = await this.prisma.message.findUnique({
-        where: { id: replyToId }
+        where: { id: replyToId },
       });
 
       if (!quotedMessage || quotedMessage.conversationId !== conversationId) {
-        throw new BadRequestException('Mensagem citada inválida ou não pertence a esta conversa.');
+        throw new BadRequestException(
+          'Mensagem citada inválida ou não pertence a esta conversa.',
+        );
       }
     }
 
@@ -45,7 +71,7 @@ export class MessagesService {
     if (signMessage && content) {
       const user = await this.prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true }
+        select: { name: true },
       });
 
       if (user) {
@@ -62,8 +88,14 @@ export class MessagesService {
     // 4.5. Tratamento especial para REAÇÕES
     // Reações não são mensagens tradicionais, apenas eventos efêmeros
     if (type === MessageType.REACTION) {
-      if (!conversation.contactId || !conversation.channelId || conversation.channel.type !== 'WHATSAPP') {
-        throw new BadRequestException('Reações só podem ser enviadas em conversas do WhatsApp.');
+      if (
+        !conversation.contactId ||
+        !conversation.channelId ||
+        conversation.channel.type !== 'WHATSAPP'
+      ) {
+        throw new BadRequestException(
+          'Reações só podem ser enviadas em conversas do WhatsApp.',
+        );
       }
 
       if (!reaction || !reaction.key) {
@@ -73,11 +105,13 @@ export class MessagesService {
       // Buscar o providerId da mensagem alvo
       const targetMessage = await this.prisma.message.findUnique({
         where: { id: reaction.key },
-        select: { providerId: true }
+        select: { providerId: true },
       });
 
       if (!targetMessage || !targetMessage.providerId) {
-        throw new BadRequestException('Mensagem alvo da reação não encontrada ou não possui providerId.');
+        throw new BadRequestException(
+          'Mensagem alvo da reação não encontrada ou não possui providerId.',
+        );
       }
 
       // Enviar reação diretamente para o WhatsApp (sem salvar no banco)
@@ -87,9 +121,9 @@ export class MessagesService {
           type: MessageType.REACTION,
           reaction: {
             text: reaction.text,
-            key: targetMessage.providerId
+            key: targetMessage.providerId,
           },
-          tenantId: tenantId
+          tenantId: tenantId,
         });
 
         // Retornar resposta sem salvar no banco
@@ -101,10 +135,12 @@ export class MessagesService {
           senderType: MessageSenderType.USER,
           senderUserId: userId,
           metadata: reaction,
-          createdAt: new Date()
+          createdAt: new Date(),
         };
       } catch (error) {
-        throw new BadRequestException(`Erro ao enviar reação: ${error.message}`);
+        throw new BadRequestException(
+          `Erro ao enviar reação: ${error.message}`,
+        );
       }
     }
 
@@ -124,38 +160,47 @@ export class MessagesService {
       include: {
         senderUser: { select: { id: true, name: true, avatarUrl: true } },
         media: true,
-        quotedMessage: true
-      }
+        quotedMessage: true,
+      },
     });
 
     // 6. Integração com WhatsApp (Baileys)
     // Só enviamos se for uma conversa externa (tem contato e canal WhatsApp)
-    if (conversation.contactId && conversation.channelId && conversation.channel.type === 'WHATSAPP') {
+    if (
+      conversation.contactId &&
+      conversation.channelId &&
+      conversation.channel.type === 'WHATSAPP'
+    ) {
       try {
         // O método sendMessage retorna o ID da mensagem gerado pelo WhatsApp (providerId)
-        const providerId = await this.whatsappService.sendMessage(conversation.channelId, {
-          to: conversation.contact.phoneNumber,
-          type: type,
-          content: finalContent, // Usa finalContent que inclui assinatura se aplicável
-          mediaId: mediaId,
-          location: location,
-          contact: contact,
-          reaction: null, // Reações já foram tratadas acima
-          tenantId: tenantId, // Passa tenantId para buscar mídia corretamente
-          // Passamos o ID original da mensagem do WhatsApp para fazer o Reply
-          replyToProviderId: quotedMessage?.providerId
-        });
+        const providerId = await this.whatsappService.sendMessage(
+          conversation.channelId,
+          {
+            to: conversation.contact.phoneNumber,
+            type: type,
+            content: finalContent, // Usa finalContent que inclui assinatura se aplicável
+            mediaId: mediaId,
+            location: location,
+            contact: contact,
+            reaction: null, // Reações já foram tratadas acima
+            tenantId: tenantId, // Passa tenantId para buscar mídia corretamente
+            // Passamos o ID original da mensagem do WhatsApp para fazer o Reply
+            replyToProviderId: quotedMessage?.providerId,
+          },
+        );
 
         // 7. Atualizar a mensagem com o ID real do provedor
         if (providerId) {
           await this.prisma.message.update({
             where: { id: message.id },
-            data: { providerId }
+            data: { providerId },
           });
         }
-
       } catch (error) {
-        console.error(`[MessagesService] Erro ao enviar mensagem ${message.id}:`, error);
+        console.error(
+          `[MessagesService] Erro ao enviar mensagem ${message.id}:`,
+          error,
+        );
         // Aqui você poderia atualizar o status da mensagem para "ERRO" se tivesse esse campo
       }
     }
@@ -178,7 +223,7 @@ export class MessagesService {
 
   async findByConversation(conversationId: string, tenantId: string) {
     const conversation = await this.prisma.conversation.findFirst({
-      where: { id: conversationId, tenantId }
+      where: { id: conversationId, tenantId },
     });
 
     if (!conversation) throw new NotFoundException('Conversa não encontrada.');
@@ -187,24 +232,26 @@ export class MessagesService {
       where: { conversationId },
       include: {
         senderUser: { select: { id: true, name: true, avatarUrl: true } },
-        senderContact: { select: { id: true, name: true, profilePicUrl: true } },
+        senderContact: {
+          select: { id: true, name: true, profilePicUrl: true },
+        },
         media: true,
         quotedMessage: {
           include: {
             senderUser: { select: { name: true } },
             senderContact: { select: { name: true } },
-            media: true // Inclui média da mensagem citada para exibir thumbnail
-          }
-        }
+            media: true, // Inclui média da mensagem citada para exibir thumbnail
+          },
+        },
       },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'asc' },
     });
   }
 
   async forwardMessage(
     forwardDto: { messageId: string; targetConversationIds: string[] },
     tenantId: string,
-    userId: string
+    userId: string,
   ) {
     const { messageId, targetConversationIds } = forwardDto;
 
@@ -212,9 +259,9 @@ export class MessagesService {
     const originalMessage = await this.prisma.message.findFirst({
       where: {
         id: messageId,
-        conversation: { tenantId }
+        conversation: { tenantId },
       },
-      include: { media: true, conversation: true }
+      include: { media: true, conversation: true },
     });
 
     if (!originalMessage) {
@@ -228,7 +275,7 @@ export class MessagesService {
       // Verificar permissão da conversa de destino
       const targetConversation = await this.prisma.conversation.findFirst({
         where: { id: conversationId, tenantId },
-        include: { channel: true, contact: true }
+        include: { channel: true, contact: true },
       });
 
       if (!targetConversation) {
@@ -255,26 +302,26 @@ export class MessagesService {
               id: true,
               content: true,
               senderUser: { select: { name: true } },
-              senderContact: { select: { name: true } }
-            }
-          }
-        }
+              senderContact: { select: { name: true } },
+            },
+          },
+        },
       });
 
       //Enviar para WhatsApp
       try {
-        await this.whatsappService.sendMessage(
-          targetConversation.channel.id,
-          {
-            to: targetConversation.contact.phoneNumber,
-            type: originalMessage.type,
-            content: originalMessage.content,
-            mediaId: originalMessage.mediaId,
-            tenantId,
-          }
-        );
+        await this.whatsappService.sendMessage(targetConversation.channel.id, {
+          to: targetConversation.contact.phoneNumber,
+          type: originalMessage.type,
+          content: originalMessage.content,
+          mediaId: originalMessage.mediaId,
+          tenantId,
+        });
       } catch (error) {
-        console.error(`[MessagesService] Erro ao encaminhar mensagem ${newMessage.id}:`, error);
+        console.error(
+          `[MessagesService] Erro ao encaminhar mensagem ${newMessage.id}:`,
+          error,
+        );
       }
 
       forwardedMessages.push(newMessage);
@@ -290,7 +337,7 @@ export class MessagesService {
       resource: messageId,
       details: {
         targetConversations: targetConversationIds,
-        forwardedCount: forwardedMessages.length
+        forwardedCount: forwardedMessages.length,
       },
       status: 'SUCCESS' as any,
     });
@@ -298,24 +345,28 @@ export class MessagesService {
     return {
       success: true,
       forwardedCount: forwardedMessages.length,
-      messages: forwardedMessages
+      messages: forwardedMessages,
     };
   }
 
   async forwardBatch(
     forwardBatchDto: { messageIds: string[]; targetConversationIds: string[] },
     tenantId: string,
-    userId: string
+    userId: string,
   ) {
     const results = [];
     let totalForwarded = 0;
 
     for (const messageId of forwardBatchDto.messageIds) {
       try {
-        const result = await this.forwardMessage({
-          messageId,
-          targetConversationIds: forwardBatchDto.targetConversationIds
-        }, tenantId, userId);
+        const result = await this.forwardMessage(
+          {
+            messageId,
+            targetConversationIds: forwardBatchDto.targetConversationIds,
+          },
+          tenantId,
+          userId,
+        );
 
         results.push(result);
         totalForwarded += result.forwardedCount;
@@ -324,7 +375,7 @@ export class MessagesService {
         results.push({
           success: false,
           messageId,
-          error: error.message
+          error: error.message,
         });
       }
     }
@@ -332,7 +383,7 @@ export class MessagesService {
     return {
       success: true,
       totalForwarded,
-      details: results
+      details: results,
     };
   }
 }

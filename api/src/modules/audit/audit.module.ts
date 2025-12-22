@@ -4,8 +4,8 @@ import { PrismaService } from '../../prisma.service';
 import { AuditController } from './audit.controller';
 
 @Module({
-    providers: [AuditService, PrismaService],
-    controllers: [AuditController],
-    exports: [AuditService],
+  providers: [AuditService, PrismaService],
+  controllers: [AuditController],
+  exports: [AuditService],
 })
-export class AuditModule { }
+export class AuditModule {}

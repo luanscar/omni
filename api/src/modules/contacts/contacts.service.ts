@@ -1,11 +1,15 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
 
 @Injectable()
 export class ContactsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(createContactDto: CreateContactDto, tenantId: string) {
     if (createContactDto.phoneNumber) {
@@ -50,7 +54,11 @@ export class ContactsService {
     return contact;
   }
 
-  async update(id: string, updateContactDto: UpdateContactDto, tenantId: string) {
+  async update(
+    id: string,
+    updateContactDto: UpdateContactDto,
+    tenantId: string,
+  ) {
     await this.findOne(id, tenantId); // Garante existência e permissão
 
     return this.prisma.contact.update({

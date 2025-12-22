@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { UpdateConversationDto } from './dto/update-conversation.dto';
@@ -6,18 +10,26 @@ import { ConversationStatus } from 'prisma/generated/enums';
 
 @Injectable()
 export class ConversationsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
-  async create(createConversationDto: CreateConversationDto, tenantId: string, userId: string) {
+  async create(
+    createConversationDto: CreateConversationDto,
+    tenantId: string,
+    userId: string,
+  ) {
     const { contactId, channelId, teamId } = createConversationDto;
 
     // Validação básica: Ou é chat de contato, ou é chat de time
     if (!contactId && !teamId) {
-      throw new BadRequestException('É necessário informar um ContactId (Atendimento) ou TeamId (Chat Interno).');
+      throw new BadRequestException(
+        'É necessário informar um ContactId (Atendimento) ou TeamId (Chat Interno).',
+      );
     }
 
     if (contactId && teamId) {
-      throw new BadRequestException('Uma conversa não pode ser simultaneamente de Contato e de Time.');
+      throw new BadRequestException(
+        'Uma conversa não pode ser simultaneamente de Contato e de Time.',
+      );
     }
 
     // Se for atendimento, verificar se já existe conversa ABERTA para esse contato no canal
@@ -26,8 +38,8 @@ export class ConversationsService {
         where: {
           tenantId,
           contactId,
-          status: { not: ConversationStatus.CLOSED }
-        }
+          status: { not: ConversationStatus.CLOSED },
+        },
       });
       if (activeConvo) {
         // Retorna a existente em vez de criar duplicada
@@ -46,8 +58,8 @@ export class ConversationsService {
       include: {
         contact: true,
         assignee: true,
-        team: true
-      }
+        team: true,
+      },
     });
   }
 
@@ -55,7 +67,7 @@ export class ConversationsService {
     return this.prisma.conversation.findMany({
       where: {
         tenantId,
-        ...(status ? { status } : {}) // Filtro opcional por status
+        ...(status ? { status } : {}), // Filtro opcional por status
       },
       include: {
         contact: { select: { name: true, profilePicUrl: true } },
@@ -68,11 +80,11 @@ export class ConversationsService {
           include: {
             media: true,
             senderContact: { select: { name: true } },
-            senderUser: { select: { name: true } }
-          }
-        }
+            senderUser: { select: { name: true } },
+          },
+        },
       },
-      orderBy: { updatedAt: 'desc' }
+      orderBy: { updatedAt: 'desc' },
     });
   }
 
@@ -83,20 +95,24 @@ export class ConversationsService {
         contact: true,
         assignee: true,
         team: true,
-        channel: true
-      }
+        channel: true,
+      },
     });
 
     if (!conversation) throw new NotFoundException('Conversa não encontrada.');
     return conversation;
   }
 
-  async update(id: string, updateConversationDto: UpdateConversationDto, tenantId: string) {
+  async update(
+    id: string,
+    updateConversationDto: UpdateConversationDto,
+    tenantId: string,
+  ) {
     await this.findOne(id, tenantId); // Garante permissão
     return this.prisma.conversation.update({
       where: { id },
       data: updateConversationDto,
-      include: { assignee: true }
+      include: { assignee: true },
     });
   }
 }

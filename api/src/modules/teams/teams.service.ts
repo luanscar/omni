@@ -2,7 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  ForbiddenException
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma.service';
 import { CreateTeamDto } from './dto/create-team.dto';
@@ -12,12 +12,19 @@ import { AddMemberDto } from './dto/add-member.dto';
 
 @Injectable()
 export class TeamsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   // Auxiliar para verificar permissão
-  private async ensurePermission(teamId: string, userId: string, userGlobalRole: UserRole) {
+  private async ensurePermission(
+    teamId: string,
+    userId: string,
+    userGlobalRole: UserRole,
+  ) {
     // 1. Se for Admin ou Manager Global, tem acesso total
-    if (userGlobalRole === UserRole.ADMIN || userGlobalRole === UserRole.MANAGER) {
+    if (
+      userGlobalRole === UserRole.ADMIN ||
+      userGlobalRole === UserRole.MANAGER
+    ) {
       return true;
     }
 
@@ -35,10 +42,16 @@ export class TeamsService {
       return true;
     }
 
-    throw new ForbiddenException('Você não tem permissão para gerenciar esta equipe.');
+    throw new ForbiddenException(
+      'Você não tem permissão para gerenciar esta equipe.',
+    );
   }
 
-  async create(createTeamDto: CreateTeamDto, tenantId: string, creatorId: string) {
+  async create(
+    createTeamDto: CreateTeamDto,
+    tenantId: string,
+    creatorId: string,
+  ) {
     const { memberIds, ...data } = createTeamDto;
 
     // Cria o time
@@ -51,7 +64,7 @@ export class TeamsService {
 
     // Adiciona o criador como LÍDER automaticamente (se desejar essa regra)
     await this.prisma.teamMember.create({
-      data: { teamId: team.id, userId: creatorId, role: TeamRole.ADMIN }
+      data: { teamId: team.id, userId: creatorId, role: TeamRole.ADMIN },
     });
 
     // Adiciona membros iniciais (como MEMBER padrão)
@@ -60,15 +73,16 @@ export class TeamsService {
       const count = await this.prisma.user.count({
         where: { id: { in: memberIds }, tenantId },
       });
-      if (count !== memberIds.length) throw new BadRequestException('Usuários inválidos.');
+      if (count !== memberIds.length)
+        throw new BadRequestException('Usuários inválidos.');
 
       await this.prisma.teamMember.createMany({
-        data: memberIds.map(uid => ({
+        data: memberIds.map((uid) => ({
           teamId: team.id,
           userId: uid,
-          role: TeamRole.MEMBER
+          role: TeamRole.MEMBER,
         })),
-        skipDuplicates: true
+        skipDuplicates: true,
       });
     }
 
@@ -83,8 +97,8 @@ export class TeamsService {
         members: {
           take: 5,
           include: {
-            user: { select: { id: true, name: true, avatarUrl: true } }
-          }
+            user: { select: { id: true, name: true, avatarUrl: true } },
+          },
         },
       },
     });
@@ -96,8 +110,16 @@ export class TeamsService {
       include: {
         members: {
           include: {
-            user: { select: { id: true, name: true, email: true, role: true, avatarUrl: true } }
-          }
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                avatarUrl: true,
+              },
+            },
+          },
         },
       },
     });
@@ -106,14 +128,19 @@ export class TeamsService {
     return team;
   }
 
-  async update(id: string, updateTeamDto: UpdateTeamDto, tenantId: string, requestUser: any) {
+  async update(
+    id: string,
+    updateTeamDto: UpdateTeamDto,
+    tenantId: string,
+    requestUser: any,
+  ) {
     // Verifica permissão granular
     await this.ensurePermission(id, requestUser.userId, requestUser.role);
 
     const { memberIds, ...data } = updateTeamDto;
 
     // Atualiza dados básicos
-    const team = await this.prisma.team.update({
+    await this.prisma.team.update({
       where: { id },
       data: data,
     });
@@ -123,11 +150,11 @@ export class TeamsService {
     if (memberIds) {
       await this.prisma.teamMember.deleteMany({ where: { teamId: id } });
       await this.prisma.teamMember.createMany({
-        data: memberIds.map(uid => ({
+        data: memberIds.map((uid) => ({
           teamId: id,
           userId: uid,
-          role: TeamRole.MEMBER
-        }))
+          role: TeamRole.MEMBER,
+        })),
       });
     }
 
@@ -139,15 +166,25 @@ export class TeamsService {
     return this.prisma.team.delete({ where: { id } });
   }
 
-  async addMember(teamId: string, addMemberDto: AddMemberDto, tenantId: string, requestUser: any) {
+  async addMember(
+    teamId: string,
+    addMemberDto: AddMemberDto,
+    tenantId: string,
+    requestUser: any,
+  ) {
     await this.findOne(teamId, tenantId); // Garante que time existe e é do tenant
     await this.ensurePermission(teamId, requestUser.userId, requestUser.role); // Verifica permissão
 
     const { userId, role } = addMemberDto;
 
     // Verifica se usuário a ser adicionado é do mesmo tenant
-    const user = await this.prisma.user.findFirst({ where: { id: userId, tenantId } });
-    if (!user) throw new NotFoundException('Usuário a ser adicionado não encontrado na organização.');
+    const user = await this.prisma.user.findFirst({
+      where: { id: userId, tenantId },
+    });
+    if (!user)
+      throw new NotFoundException(
+        'Usuário a ser adicionado não encontrado na organização.',
+      );
 
     return this.prisma.teamMember.upsert({
       where: { teamId_userId: { teamId, userId } },
@@ -156,12 +193,17 @@ export class TeamsService {
     });
   }
 
-  async removeMember(teamId: string, userId: string, tenantId: string, requestUser: any) {
+  async removeMember(
+    teamId: string,
+    userId: string,
+    tenantId: string,
+    requestUser: any,
+  ) {
     await this.findOne(teamId, tenantId);
     await this.ensurePermission(teamId, requestUser.userId, requestUser.role);
 
     return this.prisma.teamMember.delete({
-      where: { teamId_userId: { teamId, userId } }
+      where: { teamId_userId: { teamId, userId } },
     });
   }
 }

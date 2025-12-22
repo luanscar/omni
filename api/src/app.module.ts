@@ -25,7 +25,19 @@ import { AuditModule } from './modules/audit/audit.module';
         port: Number(process.env.REDIS_PORT) || 6379,
       },
     }),
-    UsersModule, TenantsModule, AuthModule, ChannelsModule, WhatsappModule, TeamsModule, ContactsModule, StorageModule, ConversationsModule, MessagesModule, EventsModule, AuditModule],
+    UsersModule,
+    TenantsModule,
+    AuthModule,
+    ChannelsModule,
+    WhatsappModule,
+    TeamsModule,
+    ContactsModule,
+    StorageModule,
+    ConversationsModule,
+    MessagesModule,
+    EventsModule,
+    AuditModule,
+  ],
   controllers: [],
   providers: [
     PrismaService,
@@ -39,4 +51,4 @@ import { AuditModule } from './modules/audit/audit.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
