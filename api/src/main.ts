@@ -59,7 +59,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(new ValidationPipe());
   app.enableShutdownHooks();
-  await app.listen(3000, '0.0.0.0');
+  await app.listen(8000, '0.0.0.0');
   console.log(`Application is running on: ${await app.getUrl()}`);
   console.log(`Swagger UI: ${await app.getUrl()}/docs`);
   console.log(`Scalar UI: ${await app.getUrl()}/reference`);
