@@ -2,7 +2,7 @@
 
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
-import { ChevronDown, Reply, Forward, Smile, FileText, Download } from 'lucide-react'
+import { ChevronDown, Reply, Forward, Smile, FileText, Download, User } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -61,55 +61,52 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
     }
   }
 
-  const renderMediaContent = () => {
+  const isImageOrVideo = message.type === MessageType.IMAGE || message.type === MessageType.VIDEO
+  const hasMedia = !!message.media
+  const isAudio = message.type === MessageType.AUDIO
+  const isDocument = message.type === MessageType.DOCUMENT
+
+  const renderMedia = () => {
     const media = message.media
     if (!media) return null
 
     switch (message.type) {
       case MessageType.IMAGE:
         return (
-          <div className="mb-2 rounded-lg overflow-hidden max-w-md">
-            <Link 
-              href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=image&mimeType=${encodeURIComponent(media.mimeType)}`}
-              scroll={false}
-            >
-              <AuthenticatedMedia
-                mediaId={media.id}
-                mimeType={media.mimeType}
-                type="image"
-                alt={media.originalName || 'Imagem'}
-                className="w-full h-auto cursor-pointer hover:opacity-90 transition"
-              />
-            </Link>
-            {message.content && (
-              <div className="text-sm mt-1">{message.content}</div>
-            )}
-          </div>
+          <Link
+            href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=image&mimeType=${encodeURIComponent(media.mimeType)}`}
+            scroll={false}
+            className="block"
+          >
+            <AuthenticatedMedia
+              mediaId={media.id}
+              mimeType={media.mimeType}
+              type="image"
+              alt={media.originalName || 'Imagem'}
+              className="w-full h-auto cursor-pointer hover:opacity-95 transition block object-cover max-h-[450px]"
+            />
+          </Link>
         )
 
       case MessageType.VIDEO:
         return (
-          <div className="mb-2 rounded-lg overflow-hidden max-w-md">
-            <Link 
-              href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=video&mimeType=${encodeURIComponent(media.mimeType)}`}
-              scroll={false}
-            >
-              <AuthenticatedMedia
-                mediaId={media.id}
-                mimeType={media.mimeType}
-                type="video"
-                className="w-full h-auto min-w-[250px]"
-              />
-            </Link>
-            {message.content && (
-              <div className="text-sm mt-1">{message.content}</div>
-            )}
-          </div>
+          <Link
+            href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=video&mimeType=${encodeURIComponent(media.mimeType)}`}
+            scroll={false}
+            className="block"
+          >
+            <AuthenticatedMedia
+              mediaId={media.id}
+              mimeType={media.mimeType}
+              type="video"
+              className="w-full h-auto min-w-[250px] block"
+            />
+          </Link>
         )
 
       case MessageType.AUDIO:
         return (
-          <div className="mb-2">
+          <div className="py-2 px-1">
             <AuthenticatedMedia
               mediaId={media.id}
               mimeType={media.mimeType}
@@ -120,15 +117,15 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         )
 
       case MessageType.DOCUMENT:
-        const isImage = 
-          media.mimeType.startsWith('image/') || 
+        const isImage =
+          media.mimeType.startsWith('image/') ||
           /\.(jpg|jpeg|png|gif|webp)$/i.test(media.originalName || '')
-        
+
         return (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 p-1">
             {isImage && (
-              <div className="rounded-lg overflow-hidden max-w-md mb-1 bg-muted/20">
-                <Link 
+              <div className="rounded-md overflow-hidden bg-muted/20">
+                <Link
                   href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=image&mimeType=${encodeURIComponent(media.mimeType)}`}
                   scroll={false}
                 >
@@ -144,7 +141,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
             )}
             <button
               onClick={handleDownloadDocument}
-              className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg hover:bg-muted transition max-w-sm w-full text-left"
+              className="flex items-center gap-2 p-3 bg-black/5 dark:bg-white/5 rounded-md hover:bg-black/10 dark:hover:bg-white/10 transition w-full text-left"
             >
               <FileText className="h-8 w-8 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
@@ -155,6 +152,40 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
               </div>
               <Download className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </button>
+          </div>
+        )
+
+      case MessageType.CONTACT:
+        const contactData = (message.metadata as any)?.contact
+        if (!contactData) return null
+
+        return (
+          <div className="w-[300px] min-w-[250px] bg-white/50 dark:bg-black/10 rounded-lg overflow-hidden mt-1 mx-1">
+            {/* Header */}
+            <div className="flex items-center gap-4 p-4 pb-4">
+              {/* Avatar do Contato (Placeholder ou extraído do vcard se possível, por enquanto placeholder) */}
+              <div className="relative">
+                <div className="h-12 w-12 rounded-full bg-muted-foreground/20 flex items-center justify-center text-muted-foreground overflow-hidden">
+                  <User className="h-7 w-7 text-white/80" />
+                </div>
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-[16px] truncate leading-tight">
+                  {contactData.displayName}
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="flex items-center border-t border-black/5 dark:border-white/10 dark:bg-[#202c33]/50">
+              <button className="flex-1 py-3 text-[14px] font-medium text-[#00a884] dark:text-[#06cf9c] hover:bg-black/5 dark:hover:bg-white/5 transition border-r border-black/5 dark:border-white/10">
+                Conversar
+              </button>
+              <button className="flex-1 py-3 text-[14px] font-medium text-[#00a884] dark:text-[#06cf9c] hover:bg-black/5 dark:hover:bg-white/5 transition">
+                Adicionar a um grupo
+              </button>
+            </div>
           </div>
         )
 
@@ -214,110 +245,139 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
       </div>
     )
   }
-  
+
   const hasReactions = !!(message.metadata as any)?.reactions && Object.keys((message.metadata as any).reactions).length > 0
 
   return (
     <>
       <div className={cn(
-        "group flex w-full", 
+        "group flex w-full",
         isSent ? "justify-end" : "justify-start",
         hasReactions ? "mb-8" : "mb-1"
       )}>
         <div
-            className={cn(
+          className={cn(
             "relative max-w-[92%] md:max-w-[85%] rounded-lg text-[14.2px] shadow-sm flex flex-col",
             isSent
-                ? "bg-[#d9fdd3] text-foreground rounded-tr-none"
-                : "bg-background text-foreground rounded-tl-none border"
-            )}
+              ? "bg-[#d9fdd3] dark:bg-[#005c4b] text-foreground rounded-tr-none"
+              : "bg-background dark:bg-[#202c33] text-foreground rounded-tl-none border dark:border-none",
+            isImageOrVideo && "p-[3px] pb-1"
+          )}
         >
-            {/* Conteúdo da Mensagem */}
-            <div className="px-3.5 pt-2 pb-1.5 relative pr-10">
-                {!isSent && (
-                    <div className="text-[12px] font-bold opacity-90 mb-0.5 text-[#e542a3] line-clamp-1">
-                        {message.senderContact?.name || message.senderContact?.phoneNumber}
-                    </div>
-                )}
+          {/* Nome do Remetente (Apenas Recebidas e não-mídia pura) */}
+          {!isSent && !isImageOrVideo && (
+            <div className="px-3 pt-2 text-[12px] font-bold opacity-90 text-[#e542a3] line-clamp-1">
+              {message.senderContact?.name || message.senderContact?.phoneNumber}
+            </div>
+          )}
 
-                {/* Renderizar Mensagem Citada (Reply) */}
-                {renderQuotedMessage()}
+          {/* Mensagem Citada (Reply) */}
+          {message.quotedMessage && (
+            <div className="px-1.5 pt-1.5">
+              {renderQuotedMessage()}
+            </div>
+          )}
 
-                {/* Renderizar mídia se existir */}
-                {renderMediaContent()}
+          {/* Mídia */}
+          {hasMedia && (
+            <div className={cn(
+              "relative overflow-hidden",
+              isImageOrVideo ? "rounded-[calc(8px-3px)]" : "px-3"
+            )}>
+              {renderMedia()}
+            </div>
+          )}
 
-                {/* Mostrar reações se existirem */}
-                {renderReactions()}
+          {/* Conteúdo de Texto / Legenda */}
+          <div className={cn(
+            "relative flex flex-col",
+            isImageOrVideo ? "px-1.5 pt-1" : "px-3 py-1.5",
+            !isSent && isImageOrVideo && "pt-0"
+          )}>
+            {!isSent && isImageOrVideo && !message.quotedMessage && (
+              <div className="py-1 text-[12px] font-bold opacity-90 text-[#e542a3] line-clamp-1">
+                {message.senderContact?.name || message.senderContact?.phoneNumber}
+              </div>
+            )}
 
-                {/* Mostrar texto apenas se não for mídia pura (ou se tiver legenda) */}
-                {message.type === MessageType.TEXT && message.content && (
-                  <div className="whitespace-pre-wrap break-words text-[14.2px] leading-relaxed">
-                    {message.content}
-                  </div>
-                )}
-                
-                {/* Metadados (Hora e Status) */}
-                <div className="flex items-center justify-end gap-1 mt-1 select-none float-right relative top-[4px] ml-2">
-                <span className="text-[11px] text-muted-foreground">
-                    {format(new Date(message.createdAt), 'HH:mm')}
+            {message.content && (
+              <div className="whitespace-pre-wrap break-words text-[14.2px] leading-relaxed">
+                {message.content}
+                <span className="inline-block w-[50px]"></span>
+              </div>
+            )}
+
+            {/* Metadados (Hora e Status) */}
+            <div className={cn(
+              "flex items-center justify-end gap-1 select-none self-end",
+              message.content ? "mt-[-12px] relative z-10" : (isImageOrVideo ? "absolute bottom-1.5 right-1.5 bg-black/45 px-1.5 py-0.5 rounded backdrop-blur-md border border-white/5" : "mt-1")
+            )}>
+              <span className={cn(
+                "text-[10px]",
+                !message.content && isImageOrVideo ? "text-white font-medium" : "text-muted-foreground/80"
+              )}>
+                {format(new Date(message.createdAt), 'HH:mm')}
+              </span>
+              {isSent && (
+                <span className={cn(
+                  "text-[16px] leading-none",
+                  message.status === 'READ' ? "text-blue-400" : (!message.content && isImageOrVideo ? "text-white/80" : "text-muted-foreground/60")
+                )}>
+                  {message.status === 'READ' || message.status === 'DELIVERED' ? '✓✓' : '✓'}
                 </span>
-                {isSent && (
-                    <span className={cn(
-                        "text-[16px]", 
-                        message.status === 'READ' ? "text-blue-500" : "text-muted-foreground"
-                    )}>
-                    {message.status === 'READ' || message.status === 'DELIVERED' ? '✓✓' : '✓'}
-                    </span>
-                )}
-                </div>
+              )}
             </div>
 
-            {/* Botão de Ações (Hover) */}
-            <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-l from-inherit to-transparent rounded-tr-lg">
+            {/* Reações */}
+            {renderReactions()}
+          </div>
+
+          {/* Botão de Ações (Hover) */}
+          <div className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity bg-gradient-to-l from-inherit to-transparent rounded-tr-lg z-20">
             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <button className="p-1 hover:bg-black/5 rounded-full">
-                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align={isSent ? "end" : "start"}>
-                    <DropdownMenuItem 
-                        className="gap-2 cursor-pointer"
-                        onClick={onReply}
-                    >
-                        <Reply className="h-4 w-4" /> Responder
-                    </DropdownMenuItem>
-                    <DropdownMenuItem 
-                        className="gap-2 cursor-pointer"
-                        onClick={() => setForwardOpen(true)}
-                    >
-                        <Forward className="h-4 w-4" /> Encaminhar
-                    </DropdownMenuItem>
-                    <DropdownMenuSub>
-                        <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
-                            <Smile className="h-4 w-4" /> Reagir
-                        </DropdownMenuSubTrigger>
-                        <DropdownMenuSubContent>
-                            <div className="flex gap-2 p-2 text-xl">
-                                <button className="hover:scale-125 transition" onClick={() => handleReaction('👍')}>👍</button>
-                                <button className="hover:scale-125 transition" onClick={() => handleReaction('❤️')}>❤️</button>
-                                <button className="hover:scale-125 transition" onClick={() => handleReaction('😂')}>😂</button>
-                                <button className="hover:scale-125 transition" onClick={() => handleReaction('😮')}>😮</button>
-                                <button className="hover:scale-125 transition" onClick={() => handleReaction('😢')}>😢</button>
-                                <button className="hover:scale-125 transition" onClick={() => handleReaction('🙏')}>🙏</button>
-                            </div>
-                        </DropdownMenuSubContent>
-                    </DropdownMenuSub>
-                </DropdownMenuContent>
+              <DropdownMenuTrigger asChild>
+                <button className="p-1 hover:bg-black/5 dark:hover:bg-white/5 rounded-full">
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align={isSent ? "end" : "start"}>
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer"
+                  onClick={onReply}
+                >
+                  <Reply className="h-4 w-4" /> Responder
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="gap-2 cursor-pointer"
+                  onClick={() => setForwardOpen(true)}
+                >
+                  <Forward className="h-4 w-4" /> Encaminhar
+                </DropdownMenuItem>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger className="gap-2 cursor-pointer">
+                    <Smile className="h-4 w-4" /> Reagir
+                  </DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <div className="flex gap-2 p-2 text-xl">
+                      <button className="hover:scale-125 transition" onClick={() => handleReaction('👍')}>👍</button>
+                      <button className="hover:scale-125 transition" onClick={() => handleReaction('❤️')}>❤️</button>
+                      <button className="hover:scale-125 transition" onClick={() => handleReaction('😂')}>😂</button>
+                      <button className="hover:scale-125 transition" onClick={() => handleReaction('😮')}>😮</button>
+                      <button className="hover:scale-125 transition" onClick={() => handleReaction('😢')}>😢</button>
+                      <button className="hover:scale-125 transition" onClick={() => handleReaction('🙏')}>🙏</button>
+                    </div>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuContent>
             </DropdownMenu>
-            </div>
+          </div>
         </div>
       </div>
 
-      <ForwardMessageDialog 
-        messageId={message.id} 
-        open={forwardOpen} 
-        onOpenChange={setForwardOpen} 
+      <ForwardMessageDialog
+        messageId={message.id}
+        open={forwardOpen}
+        onOpenChange={setForwardOpen}
       />
     </>
   )
