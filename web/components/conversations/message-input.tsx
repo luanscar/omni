@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic, Smile, Trash2, Check, X } from 'lucide-react'
+import { Send, Paperclip, Mic, Smile, Trash2, Check, X, Loader2, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateMessage } from '@/lib/api/modules/messages'
-import { useUploadFile } from '@/lib/api/modules/storage/mutations'
+import { useUploadFile, useUploadBatchFiles } from '@/lib/api/modules/storage/mutations'
 import { MessageType } from '@/lib/api/types'
 import { useAudioRecorder } from '@/hooks/use-audio-recorder'
 import {
@@ -27,9 +27,12 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   const [content, setContent] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [pendingFiles, setPendingFiles] = useState<File[]>([])
+  const [previewIndex, setPreviewIndex] = useState(0)
   
   const { mutate: sendMessage, isPending } = useCreateMessage()
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile()
+  const { mutate: uploadFileBatch, isPending: isUploadingBatch } = useUploadBatchFiles()
   
   const {
       isRecording,
@@ -114,54 +117,67 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
+    const files = Array.from(e.target.files || [])
+    if (files.length === 0) return
 
-    console.log('[FILE DEBUG] Arquivo selecionado:', {
-        name: file.name,
-        type: file.type,
-        size: file.size
-    })
+    setPendingFiles(prev => [...prev, ...files])
+    
+    // Abrir o primeiro se for a primeira carga
+    if (pendingFiles.length === 0) {
+        setPreviewIndex(0)
+    }
 
-    // Determinar tipo de mensagem baseado no MIME type
-    let type = MessageType.DOCUMENT
-    if (file.type.startsWith('image/')) type = MessageType.IMAGE
-    if (file.type.startsWith('video/')) type = MessageType.VIDEO
-    if (file.type.startsWith('audio/')) type = MessageType.AUDIO
-
-    console.log('[FILE DEBUG] Tipo de mensagem determinado:', type)
-    console.log('[FILE DEBUG] Iniciando upload...')
-
-    uploadFile(
-      { file, category: 'chat_media' },
-      {
-        onSuccess: (media) => {
-          console.log('[FILE DEBUG] Upload concluído, enviando mensagem:', media)
-          sendMessage({
-            conversationId,
-            content: file.name, // Nome do arquivo como legenda/conteúdo padrão
-            type,
-            mediaId: media.id,
-            replyToId: replyTo?.id
-          }, {
-              onSuccess: () => {
-                  console.log('[FILE DEBUG] Mensagem enviada com sucesso')
-                  onCancelReply?.()
-              },
-              onError: (err) => {
-                  console.error('[FILE DEBUG] Erro ao enviar mensagem:', err)
-              }
-          })
-        },
-        onError: (error) => {
-          console.error('[FILE DEBUG] Erro ao fazer upload:', error)
-          // TODO: Mostrar toast de erro
-        }
-      }
-    )
-
-    // Limpar input
+    // Limpar input para permitir selecionar o mesmo arquivo novamente
     e.target.value = ''
+  }
+
+  const handleBatchSend = async () => {
+    if (pendingFiles.length === 0) return
+
+    console.log('[BATCH DEBUG] Iniciando upload de', pendingFiles.length, 'arquivos')
+    
+    uploadFileBatch({ 
+        files: pendingFiles, 
+        category: 'chat_media' 
+    }, {
+        onSuccess: (medias) => {
+            console.log('[BATCH DEBUG] Upload concluído:', medias)
+            
+            // Enviar mensagens sequencialmente ou em paralelo
+            medias.forEach((media, index) => {
+                let type = MessageType.DOCUMENT
+                if (media.mimeType.startsWith('image/')) type = MessageType.IMAGE
+                if (media.mimeType.startsWith('video/')) type = MessageType.VIDEO
+                if (media.mimeType.startsWith('audio/')) type = MessageType.AUDIO
+
+                sendMessage({
+                    conversationId,
+                    content: index === 0 ? content : '', // Caption vai na primeira mensagem
+                    type,
+                    mediaId: media.id,
+                    replyToId: replyTo?.id
+                })
+            })
+
+            setPendingFiles([])
+            setContent('')
+            onCancelReply?.()
+        },
+        onError: (err) => {
+            console.error('[BATCH DEBUG] Erro no upload em lote:', err)
+        }
+    })
+  }
+
+  const removePendingFile = (index: number) => {
+      setPendingFiles(prev => {
+          const next = [...prev]
+          next.splice(index, 1)
+          return next
+      })
+      if (previewIndex >= pendingFiles.length - 1) {
+          setPreviewIndex(Math.max(0, pendingFiles.length - 2))
+      }
   }
 
   const formatTime = (seconds: number) => {
@@ -290,6 +306,128 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
           </div>
         </div>
       </div>
+
+      {/* Multi-file Preview Overlay */}
+      {pendingFiles.length > 0 && (
+          <div className="fixed inset-0 z-50 bg-[#0b141a] flex flex-col animate-in fade-in duration-200">
+              {/* Top Bar */}
+              <div className="flex items-center justify-between p-4">
+                  <Button variant="ghost" size="icon" onClick={() => setPendingFiles([])} className="text-white hover:bg-white/10 rounded-full">
+                      <X className="h-6 w-6" />
+                  </Button>
+                  <div className="text-white text-center">
+                      <div className="font-semibold">{pendingFiles[previewIndex]?.name}</div>
+                      <div className="text-xs opacity-70">
+                          {pendingFiles[previewIndex]?.type.startsWith('image/') ? 'Imagem' : 
+                           pendingFiles[previewIndex]?.type.startsWith('video/') ? 'Vídeo' : 'Documento'}
+                      </div>
+                  </div>
+                  <div className="w-10" /> {/* Spacer */}
+              </div>
+
+              {/* Main Preview */}
+              <div className="flex-1 flex items-center justify-center p-4 min-h-0">
+                  {pendingFiles[previewIndex]?.type.startsWith('image/') ? (
+                      <img 
+                        src={URL.createObjectURL(pendingFiles[previewIndex])} 
+                        className="max-h-full max-w-full object-contain"
+                        alt="Preview"
+                      />
+                  ) : pendingFiles[previewIndex]?.type.startsWith('video/') ? (
+                      <video 
+                        src={URL.createObjectURL(pendingFiles[previewIndex])} 
+                        className="max-h-full max-w-full"
+                        controls
+                      />
+                  ) : (
+                      <div className="flex flex-col items-center gap-4 text-white">
+                          <FileText className="h-24 w-24 opacity-50" />
+                          <span>{pendingFiles[previewIndex]?.name}</span>
+                      </div>
+                  )}
+              </div>
+
+              {/* Bottom Caption & Thumbnails */}
+              <div className="bg-[#111b21] p-4 flex flex-col gap-4">
+                  {/* Caption Input */}
+                  <div className="max-w-4xl mx-auto w-full bg-[#202c33] rounded-lg flex items-center px-4 py-2 border border-white/5">
+                      <input 
+                        className="flex-1 bg-transparent border-none focus:ring-0 text-white placeholder:text-muted-foreground mr-2"
+                        placeholder="Digite uma mensagem"
+                        value={content}
+                        onChange={(e) => setContent(e.target.value)}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleBatchSend()
+                            }
+                        }}
+                      />
+                      <EmojiPickerButton />
+                  </div>
+
+                  {/* Thumbnails Row */}
+                  <div className="flex items-center justify-center gap-2 overflow-x-auto py-2">
+                       {pendingFiles.map((file, i) => (
+                           <div 
+                             key={i} 
+                             className={cn(
+                               "relative w-14 h-14 rounded-md overflow-hidden border-2 cursor-pointer shrink-0 transition-all",
+                               previewIndex === i ? "border-[#06cf9c] scale-110" : "border-transparent opacity-60 hover:opacity-100"
+                             )}
+                             onClick={() => setPreviewIndex(i)}
+                           >
+                               {file.type.startsWith('image/') ? (
+                                   <img src={URL.createObjectURL(file)} className="w-full h-full object-cover" />
+                               ) : (
+                                   <div className="w-full h-full bg-[#2a3942] flex items-center justify-center">
+                                       <FileText className="h-6 w-6 text-white/50" />
+                                   </div>
+                               )}
+                               <button 
+                                 className="absolute top-0 right-0 bg-black/50 text-white rounded-bl-md p-0.5 hover:bg-black/80"
+                                 onClick={(e) => {
+                                     e.stopPropagation()
+                                     removePendingFile(i)
+                                 }}
+                               >
+                                   <X className="h-3 w-3" />
+                               </button>
+                           </div>
+                       ))}
+
+                       <button 
+                         className="w-14 h-14 rounded-md border-2 border-dashed border-white/20 flex items-center justify-center text-white/50 hover:border-white/40 hover:text-white transition-all shrink-0"
+                         onClick={() => fileInputRef.current?.click()}
+                       >
+                           <Paperclip className="h-6 w-6" />
+                       </button>
+                  </div>
+
+                  {/* Send Button */}
+                  <div className="flex justify-end max-w-6xl mx-auto w-full">
+                      <Button 
+                        className="h-14 w-14 rounded-full bg-[#00a884] hover:bg-[#06cf9c] text-white shadow-lg relative"
+                        onClick={handleBatchSend}
+                        disabled={isPending || isUploadingBatch}
+                      >
+                         {isUploadingBatch ? <Loader2 className="animate-spin" /> : <Send className="h-6 w-6 ml-1" />}
+                         <div className="absolute -top-1 -right-1 bg-white text-black text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center border-2 border-[#111b21]">
+                             {pendingFiles.length}
+                         </div>
+                      </Button>
+                  </div>
+              </div>
+          </div>
+      )}
     </div>
   )
+}
+
+function EmojiPickerButton() {
+    return (
+        <Button variant="ghost" size="icon" className="text-muted-foreground hover:bg-transparent">
+            <Smile className="h-6 w-6" />
+        </Button>
+    )
 }
