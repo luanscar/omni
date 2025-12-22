@@ -64,13 +64,16 @@ export interface MessageSenderUser {
 export interface MessageSenderContact {
   id: string
   name: string
+  phoneNumber?: string
   profilePicUrl?: string
 }
 
 export interface MessageMedia {
   id: string
   fileName: string
+  originalName?: string
   mimeType: string
+  size?: number
   publicUrl: string
 }
 
@@ -89,6 +92,7 @@ export interface Message {
   mediaId?: string
   media?: MessageMedia
   quotedMessage?: Message
+  status: 'SENT' | 'DELIVERED' | 'READ' | 'FAILED'
   read: boolean
   createdAt: string
 }
