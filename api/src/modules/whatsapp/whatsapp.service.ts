@@ -17,6 +17,7 @@ import makeWASocket, {
 import * as qrcode from 'qrcode';
 import { useDatabaseAuthState } from './database-auth-state';
 import { StorageService } from '../storage/storage.service';
+import { EventsGateway } from '../events/events.gateway';
 import { MessageType } from 'prisma/generated/enums';
 
 export interface SendMessageOptions {
@@ -43,7 +44,10 @@ export class WhatsappService implements OnModuleInit {
     @InjectQueue('whatsapp-events') private queue: Queue,
     @Inject(forwardRef(() => StorageService))
     private storageService: StorageService,
+    @Inject(forwardRef(() => EventsGateway))
+    private eventsGateway: EventsGateway,
   ) { }
+
 
   async onModuleInit() {
     await this.reconnectSavedSessions();
@@ -150,7 +154,7 @@ export class WhatsappService implements OnModuleInit {
         break;
 
       default:
-        throw new Error(`Tipo de mensagem não suportado: ${options.type}`);
+        throw new Error(`Tipo de mensagem não suportado: ${options.type} `);
     }
 
     // --- LÓGICA DE QUOTE / REPLY ---
@@ -203,6 +207,11 @@ export class WhatsappService implements OnModuleInit {
 
     this.connectionStatus.set(channelId, 'CONNECTING');
 
+    // Emitir evento de início de conexão
+    if (tenantId) {
+      this.eventsGateway.emitWhatsappConnecting(tenantId, channelId);
+    }
+
     const { state, saveCreds } = await useDatabaseAuthState(
       channelId,
       this.prisma,
@@ -220,20 +229,41 @@ export class WhatsappService implements OnModuleInit {
 
     socket.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect, qr } = update;
+
       if (qr) {
         const qrCodeDataURL = await qrcode.toDataURL(qr);
         this.qrCodes.set(channelId, qrCodeDataURL);
         this.connectionStatus.set(channelId, 'QRCODE_READY');
+
+        // Emitir evento de QR Code gerado
+        if (tenantId) {
+          this.eventsGateway.emitWhatsappQrCode(tenantId, channelId, qrCodeDataURL);
+        }
       }
+
       if (connection === 'close') {
         const shouldReconnect =
           (lastDisconnect?.error as any)?.output?.statusCode !==
           DisconnectReason.loggedOut;
+
+        const disconnectReason = shouldReconnect ? 'connection_lost' : 'logged_out';
+
         this.cleanUpSession(channelId);
+
         if (shouldReconnect) {
+          // Emitir evento de reconexão
+          if (tenantId) {
+            this.eventsGateway.emitWhatsappReconnecting(tenantId, channelId);
+          }
           setTimeout(() => this.startSession(channelId, tenantId), 3000);
         } else {
           this.connectionStatus.set(channelId, 'DISCONNECTED');
+
+          // Emitir evento de desconexão
+          if (tenantId) {
+            this.eventsGateway.emitWhatsappDisconnected(tenantId, channelId, disconnectReason);
+          }
+
           await this.prisma.channel.update({
             where: { id: channelId },
             data: { active: false, identifier: null },
@@ -243,11 +273,19 @@ export class WhatsappService implements OnModuleInit {
         this.connectionStatus.set(channelId, 'CONNECTED');
         this.qrCodes.delete(channelId);
         const userJid = socket.user?.id ? socket.user.id.split(':')[0] : null;
+
         if (userJid) {
           await this.prisma.channel.update({
             where: { id: channelId },
             data: { identifier: userJid, active: true },
           });
+
+          // Emitir evento de conexão estabelecida
+          if (tenantId) {
+            this.eventsGateway.emitWhatsappConnected(tenantId, channelId, {
+              identifier: userJid,
+            });
+          }
         }
       }
     });
@@ -285,6 +323,12 @@ export class WhatsappService implements OnModuleInit {
   async logout(channelId: string) {
     const socket = this.sessions.get(channelId);
     if (socket) {
+      // Buscar o tenantId antes de fazer logout
+      const channel = await this.prisma.channel.findUnique({
+        where: { id: channelId },
+      });
+      const tenantId = channel?.tenantId;
+
       await socket.logout();
       this.cleanUpSession(channelId);
       // Remover sessão do banco de dados
@@ -296,6 +340,12 @@ export class WhatsappService implements OnModuleInit {
         where: { id: channelId },
         data: { active: false, identifier: null },
       });
+
+      // Emitir evento de logout/desconexão
+      if (tenantId) {
+        this.eventsGateway.emitWhatsappDisconnected(tenantId, channelId, 'manual_logout');
+      }
+
       return { status: 'LOGGED_OUT' };
     }
     throw new Error('Session not found');
