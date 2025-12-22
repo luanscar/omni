@@ -41,17 +41,15 @@ export class WhatsappProcessor {
 
     const remoteJid = message.key.remoteJid;
     const isGroup = remoteJid.endsWith('@g.us');
-
-    if (isGroup) {
-      this.logger.debug(`Ignoring group message from ${remoteJid}`);
-      return;
-    }
-
-    const pushName = message.pushName || 'Desconhecido';
     const isFromMe = message.key.fromMe;
 
+    // Identificar o remetente real (Participant se for grupo, RemoteJid se for privado)
+    // Em alguns casos de grupos antigos/migrados, participant pode ser nulo, fallback para remoteJid
+    const participantJid = isGroup ? (message.key.participant || remoteJid) : remoteJid;
+    const senderPushName = message.pushName || (isGroup ? 'Participante Desconhecido' : 'Desconhecido');
+
     this.logger.debug(
-      `Processing message type: ${getContentType(message.message)} from ${remoteJid} | fromMe: ${isFromMe}`,
+      `Processing message type: ${getContentType(message.message)} from ${remoteJid} | participant: ${participantJid} | fromMe: ${isFromMe}`,
     );
 
     // Ignorar reações - não são mensagens tradicionais
@@ -83,18 +81,66 @@ export class WhatsappProcessor {
         return;
       }
 
-      const contact = await this.findOrCreateContact(
+      // 1. Tratar o Contato da CONVERSA (Grupo ou Indivíduo)
+      // Se for grupo, o contato da conversa é o ID do Grupo.
+      let conversationContactName = senderPushName;
+
+      // Se for novo contato de grupo, tentamos pegar o nome real do grupo
+      if (isGroup) {
+        const groupContact = await this.prisma.contact.findFirst({
+          where: { tenantId, phoneNumber: remoteJid },
+        });
+
+        if (groupContact) {
+          conversationContactName = groupContact.name;
+        } else {
+          // Tentar buscar metadados do grupo através do socket
+          try {
+            const socket = this.whatsappService.getSocket(channelId);
+            if (socket) {
+              const groupMetadata = await socket.groupMetadata(remoteJid);
+              conversationContactName = groupMetadata.subject || `Grupo ${remoteJid.slice(0, 4)}`;
+            } else {
+              conversationContactName = `Grupo ${remoteJid.slice(0, 4)}...`;
+            }
+          } catch (err) {
+            this.logger.warn(`Failed to fetch group metadata for ${remoteJid}: ${err.message}`);
+            conversationContactName = `Grupo ${remoteJid.slice(0, 4)}...`;
+          }
+        }
+      }
+
+      const conversationContact = await this.findOrCreateContact(
         tenantId,
         remoteJid,
-        pushName,
+        conversationContactName, // Nome do Grupo (se grupo) ou Nome do Contato (se privado)
         channelId,
         isGroup,
       );
+
       const conversation = await this.findOrCreateConversation(
         tenantId,
         channelId,
-        contact.id,
+        conversationContact.id,
       );
+
+      // 2. Tratar o Contato do REMETENTE (Quem enviou)
+      let senderContact;
+
+      if (isGroup) {
+        // O remetente é o participante. Criamos um contato separado para ele se não existir.
+        // O 'isGroup' aqui é false, pois o participante é uma pessoa (exceto se for grupo dentro de comunidade, mas vamos assumir pessoa)
+        senderContact = await this.findOrCreateContact(
+          tenantId,
+          participantJid,
+          senderPushName,
+          channelId,
+          false
+        );
+      } else {
+        // Se conversa privada, o remetente é o próprio contato da conversa
+        senderContact = conversationContact;
+      }
 
       // Detectar se é uma resposta (quotedMessage)
       let quotedMessageId: string | null = null;
@@ -148,7 +194,7 @@ export class WhatsappProcessor {
           mediaId: mediaId,
           metadata: metadata,
           senderType: MessageSenderType.CONTACT,
-          senderContactId: contact.id,
+          senderContactId: senderContact.id, // VINCULA AO REMETENTE REAL (PARTICIPANTE)
           quotedMessageId: quotedMessageId,
           read: false,
         },
