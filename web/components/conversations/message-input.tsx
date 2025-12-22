@@ -79,7 +79,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
               }
           })
       }
-  }, [audioBlob, conversationId, sendMessage, uploadFile, resetRecording])
+  }, [audioBlob, conversationId, sendMessage, uploadFile, resetRecording, replyTo, onCancelReply])
 
   // Ajustar altura do textarea
   useEffect(() => {
@@ -195,98 +195,100 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   }
 
   return (
-    <div className="flex flex-col bg-muted/30 border-t">
-      {/* Reply Preview */}
-      {replyTo && (
-        <div className="flex items-center gap-2 p-2 px-4 bg-background/50 border-b animate-in slide-in-from-bottom-2">
-            <div className="flex-1 min-w-0 border-l-4 border-primary pl-3 py-1">
-                <div className="text-xs font-bold text-primary truncate">
-                    {replyTo.senderUser?.name || replyTo.senderContact?.name || 'Cliente'}
-                </div>
-                <div className="text-xs text-muted-foreground truncate">
-                    {replyTo.type === MessageType.TEXT ? replyTo.content : `[${replyTo.type}]`}
-                </div>
-            </div>
-            <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-8 w-8 text-muted-foreground hover:bg-transparent"
-                onClick={onCancelReply}
-            >
-                <X className="h-4 w-4" />
-            </Button>
-        </div>
-      )}
-
-      <div className="flex items-end gap-2 p-3 min-h-[60px]">
-      {/* Botão de Anexo */}
-      <div className="flex gap-2 pb-2">
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-transparent" disabled={isUploading || isPending}>
-                    <Paperclip className="h-6 w-6" />
-                </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" side="top">
-                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                    Fotos e Vídeos
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
-                    Documento
-                </DropdownMenuItem>
-            </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <input 
-            type="file" 
-            ref={fileInputRef} 
-            className="hidden" 
-            onChange={handleFileSelect}
-        />
-      </div>
-
-      {/* Input de Texto */}
-      <div className="flex-1 bg-background rounded-lg border flex items-end overflow-hidden focus-within:ring-1 focus-within:ring-ring">
-        <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground shrink-0 rounded-none hover:bg-transparent pb-2">
-            <Smile className="h-6 w-6" />
-        </Button>
-        
-        <Textarea
-          ref={textareaRef}
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Digite uma mensagem"
-          className="min-h-[40px] max-h-[150px] w-full resize-none border-0 focus-visible:ring-0 py-3 px-2 bg-transparent leading-relaxed"
-          rows={1}
-          disabled={isUploading || isPending}
-        />
-      </div>
-
-      {/* Botão Enviar / Microfone */}
-      <div className="pb-1">
-        {content.trim() ? (
-            <Button
-              size="icon"
-              className="h-10 w-10 rounded-full transition-all duration-200"
-              onClick={handleSend}
-              disabled={isPending || isUploading}
-            >
-               <Send className="h-5 w-5 ml-0.5" />
-            </Button>
-        ) : (
-            <Button
-              size="icon"
-              variant="ghost" 
-              className={cn(
-                  "h-10 w-10 text-muted-foreground rounded-full transition-all duration-200",
-              )}
-              onClick={startRecording}
-              disabled={isPending || isUploading}
-            >
-               <Mic className="h-6 w-6" />
-            </Button>
+    <div className="p-2 pb-4 bg-background border-t">
+      <div className="max-w-5xl mx-auto bg-muted/30 dark:bg-[#202c33] rounded-[16px] overflow-hidden flex flex-col border shadow-sm">
+        {/* Reply Preview */}
+        {replyTo && (
+          <div className="flex items-center gap-2 p-2 px-4 bg-black/5 dark:bg-black/20 border-b border-black/5 dark:border-white/5 animate-in slide-in-from-bottom-2">
+              <div className="flex-1 min-w-0 border-l-[4px] border-[#06cf9c] pl-3 py-1">
+                  <div className="text-[13px] font-semibold text-[#06cf9c] truncate">
+                      {replyTo.senderType === 'USER' ? 'Você' : (replyTo.senderContact?.name || 'Cliente')}
+                  </div>
+                  <div className="text-[13px] text-muted-foreground truncate">
+                      {replyTo.type === MessageType.TEXT ? replyTo.content : `[${replyTo.type}]`}
+                  </div>
+              </div>
+              <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 text-muted-foreground hover:bg-transparent -mt-5"
+                  onClick={onCancelReply}
+              >
+                  <X className="h-4 w-4" />
+              </Button>
+          </div>
         )}
+
+        {/* Action Buttons & Input */}
+        <div className="flex items-end gap-1 p-2 min-h-[56px]">
+          {/* Botão de Anexo */}
+          <div className="flex gap-1 pb-1">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full" disabled={isUploading || isPending}>
+                        <Paperclip className="h-5 w-5" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start" side="top" className="rounded-xl">
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        Fotos e Vídeos
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                        Documento
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+            
+            <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileSelect}
+            />
+
+            <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full">
+                <Smile className="h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Input de Texto */}
+          <div className="flex-1 flex items-center min-h-[40px]">
+            <Textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Digite uma mensagem"
+              className="min-h-[40px] max-h-[150px] w-full resize-none border-0 focus-visible:ring-0 py-2 px-1 bg-transparent text-[15px] leading-normal"
+              rows={1}
+              disabled={isUploading || isPending}
+            />
+          </div>
+
+          {/* Botão Enviar / Microfone */}
+          <div className="pb-1 px-1">
+            {content.trim() ? (
+                <Button
+                  size="icon"
+                  className="h-10 w-10 rounded-full transition-all duration-200 bg-primary hover:bg-primary/90"
+                  onClick={handleSend}
+                  disabled={isPending || isUploading}
+                >
+                   <Send className="h-5 w-5 ml-0.5" />
+                </Button>
+            ) : (
+                <Button
+                  size="icon"
+                  variant="ghost" 
+                  className="h-10 w-10 text-muted-foreground rounded-full hover:bg-black/5 dark:hover:bg-white/5"
+                  onClick={startRecording}
+                  disabled={isPending || isUploading}
+                >
+                   <Mic className="h-5 w-5" />
+                </Button>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   )
