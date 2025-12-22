@@ -12,12 +12,16 @@ import {
 import { Message } from './entities/message.entity';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole } from 'prisma/generated/enums';
+import {
+  ForwardMessageDto,
+  ForwardBatchDto,
+} from './dto/forward-message.dto';
 
 @ApiTags('Messages')
 @ApiBearerAuth()
 @Controller('messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(private readonly messagesService: MessagesService) { }
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
@@ -196,26 +200,15 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
 
   @Post('forward')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
-  @ApiOperation({
-    summary: 'Encaminhar mensagem',
-    description:
-      'Encaminha uma mensagem existente para uma ou mais conversas (máx 10)',
+  @ApiOperation({ summary: 'Encaminhar mensagem' })
+  @ApiBody({ type: ForwardMessageDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Mensagem encaminhada com sucesso.',
   })
-  @ApiBody({
-    type: 'ForwardMessageDto',
-    examples: {
-      example1: {
-        summary: 'Encaminhar para 2 conversas',
-        value: {
-          messageId: 'abc-123-def-456',
-          targetConversationIds: ['conv-1', 'conv-2'],
-        },
-      },
-    },
-  })
-  @ApiResponse({ status: 201, description: 'Mensagem encaminhada com sucesso' })
-  @ApiResponse({ status: 404, description: 'Mensagem original não encontrada' })
-  async forwardMessage(@Body() forwardDto: any, @Request() req) {
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 404, description: 'Mensagem original não encontrada.' })
+  async forwardMessage(@Body() forwardDto: ForwardMessageDto, @Request() req) {
     return this.messagesService.forwardMessage(
       forwardDto,
       req.user.tenantId,
@@ -225,28 +218,14 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
 
   @Post('forward/batch')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
-  @ApiOperation({
-    summary: 'Encaminhar múltiplas mensagens',
-    description:
-      'Encaminha várias mensagens (máx 50) para várias conversas (máx 10)',
-  })
-  @ApiBody({
-    type: 'ForwardBatchDto',
-    examples: {
-      example1: {
-        summary: 'Encaminhar 3 mensagens para 2 conversas',
-        value: {
-          messageIds: ['msg-1', 'msg-2', 'msg-3'],
-          targetConversationIds: ['conv-x', 'conv-y'],
-        },
-      },
-    },
-  })
+  @ApiOperation({ summary: 'Encaminhar múltiplas mensagens' })
+  @ApiBody({ type: ForwardBatchDto })
   @ApiResponse({
     status: 201,
-    description: 'Mensagens encaminhadas com sucesso',
+    description: 'Mensagens encaminhadas com sucesso.',
   })
-  async forwardBatch(@Body() forwardBatchDto: any, @Request() req) {
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  async forwardBatch(@Body() forwardBatchDto: ForwardBatchDto, @Request() req) {
     return this.messagesService.forwardBatch(
       forwardBatchDto,
       req.user.tenantId,

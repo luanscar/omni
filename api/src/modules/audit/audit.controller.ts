@@ -10,6 +10,7 @@ import {
 import { Roles } from '../../common/decorators/roles.decorator';
 import { UserRole, AuditEventType, AuditStatus } from 'prisma/generated/enums';
 import { PrismaService } from '../../prisma.service';
+import { AuditLog } from './entities/audit-log.entity';
 
 @ApiTags('Audit')
 @ApiBearerAuth()
@@ -18,14 +19,11 @@ export class AuditController {
   constructor(
     private auditService: AuditService,
     private prisma: PrismaService,
-  ) {}
+  ) { }
 
   @Get('logs')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({
-    summary: 'Listar logs de auditoria',
-    description: 'Retorna lista de eventos auditados com filtros opcionais',
-  })
+  @ApiOperation({ summary: 'Listar logs de auditoria' })
   @ApiQuery({ name: 'eventType', required: false, enum: AuditEventType })
   @ApiQuery({ name: 'module', required: false, type: String })
   @ApiQuery({ name: 'status', required: false, enum: AuditStatus })
@@ -35,10 +33,11 @@ export class AuditController {
   @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Lista de logs retornada com sucesso',
+    description: 'Lista de logs retornada com sucesso.',
+    type: [AuditLog],
   })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Sem permissão.' })
   async getLogs(
     @Query('eventType') eventType?: AuditEventType,
     @Query('module') module?: string,
@@ -63,19 +62,15 @@ export class AuditController {
 
   @Get('stats')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({
-    summary: 'Estatísticas de auditoria',
-    description:
-      'Retorna estatísticas agregadas dos eventos auditados em um período',
-  })
+  @ApiOperation({ summary: 'Estatísticas de auditoria' })
   @ApiQuery({ name: 'startDate', required: true, type: String })
   @ApiQuery({ name: 'endDate', required: true, type: String })
   @ApiResponse({
     status: 200,
-    description: 'Estatísticas retornadas com sucesso',
+    description: 'Estatísticas retornadas com sucesso.',
   })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({ status: 403, description: 'Sem permissão' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Sem permissão.' })
   async getStats(
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
@@ -90,14 +85,15 @@ export class AuditController {
 
   @Get('logs/:id')
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
-  @ApiOperation({
-    summary: 'Detalhes de um log específico',
-    description: 'Retorna informações completas de um evento de auditoria',
+  @ApiOperation({ summary: 'Buscar um log específico pelo ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Detalhes do log retornados.',
+    type: AuditLog,
   })
-  @ApiResponse({ status: 200, description: 'Detalhes do log retornados' })
-  @ApiResponse({ status: 401, description: 'Não autorizado' })
-  @ApiResponse({ status: 403, description: 'Sem permissão' })
-  @ApiResponse({ status: 404, description: 'Log não encontrado' })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 403, description: 'Sem permissão.' })
+  @ApiResponse({ status: 404, description: 'Log não encontrado.' })
   async getLogDetails(@Param('id') id: string, @Request() req) {
     return this.prisma.auditLog.findFirst({
       where: {
