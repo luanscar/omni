@@ -22,6 +22,8 @@ import {
 import EmojiPicker, { Theme, EmojiStyle } from 'emoji-picker-react'
 import { cn } from '@/lib/utils'
 import { Message } from '@/lib/api/modules/messages/types'
+import { ContactSelectorDialog } from './contact-selector-dialog'
+import { Contact } from '@/lib/api/modules/contacts/types'
 
 interface MessageInputProps {
   conversationId: string
@@ -36,6 +38,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   const [pendingFiles, setPendingFiles] = useState<{ file: File; caption: string }[]>([])
   const [previewIndex, setPreviewIndex] = useState(0)
   const [signMessage, setSignMessage] = useState(false)
+  const [contactDialogOpen, setContactDialogOpen] = useState(false)
   
   const { mutate: sendMessage, isPending } = useCreateMessage()
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile()
@@ -190,6 +193,32 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
       }
   }
 
+  const handleContactSelect = (contact: Contact) => {
+    if (!contact.phoneNumber) return
+
+    const cleanPhone = contact.phoneNumber.replace(/\D/g, '')
+    const vcard = `BEGIN:VCARD
+VERSION:3.0
+FN:${contact.name}
+N:${contact.name};;;;
+TEL;TYPE=CELL;waid=${cleanPhone}:${contact.phoneNumber}
+END:VCARD`
+
+    sendMessage({
+      conversationId,
+      type: MessageType.CONTACT,
+      contact: {
+        displayName: contact.name,
+        vcard
+      },
+      replyToId: replyTo?.id
+    }, {
+        onSuccess: () => {
+            onCancelReply?.()
+        }
+    })
+  }
+
   const formatTime = (seconds: number) => {
       const mins = Math.floor(seconds / 60)
       const secs = seconds % 60
@@ -284,33 +313,14 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
                         <span className="text-[15px]">Áudio</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
+                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors" onClick={() => setContactDialogOpen(true)}>
                         <div className="flex items-center justify-center h-5 w-5 text-primary">
                             <User2 className="h-5 w-5" />
                         </div>
                         <span className="text-[15px]">Contato</span>
                     </DropdownMenuItem>
 
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 text-primary">
-                            <BarChart3 className="h-5 w-5" />
-                        </div>
-                        <span className="text-[15px]">Enquete</span>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 text-primary">
-                            <Calendar className="h-5 w-5" />
-                        </div>
-                        <span className="text-[15px]">Evento</span>
-                    </DropdownMenuItem>
-
-                    <DropdownMenuItem className="gap-4 p-3 cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-lg transition-colors">
-                        <div className="flex items-center justify-center h-5 w-5 text-primary">
-                            <PlusCircle className="h-5 w-5" />
-                        </div>
-                        <span className="text-[15px]">Nova figurinha</span>
-                    </DropdownMenuItem>
+                   
                 </DropdownMenuContent>
             </DropdownMenu>
             
@@ -517,6 +527,12 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
               </div>
           </div>
       )}
+      {/* Contact Selector Dialog */}
+      <ContactSelectorDialog 
+        open={contactDialogOpen}
+        onOpenChange={setContactDialogOpen}
+        onSelect={handleContactSelect}
+      />
     </div>
   )
 }
@@ -538,7 +554,7 @@ function EmojiPickerButton({ className, onEmojiSelect }: { className?: string; o
             <PopoverContent side="top" align="start" className="p-0 border-none bg-transparent shadow-none w-auto mb-2">
                 <EmojiPicker 
                     theme={Theme.AUTO}
-                    emojiStyle={EmojiStyle.WHATSAPP}
+                    emojiStyle={EmojiStyle.NATIVE}
                     onEmojiClick={(emojiData) => {
                         onEmojiSelect(emojiData.emoji)
                         // setOpen(false) // Descomente se quiser fechar após escolher um emoji
