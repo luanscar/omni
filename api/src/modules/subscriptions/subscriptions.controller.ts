@@ -60,6 +60,24 @@ export class SubscriptionsController {
         return this.subscriptionsService.findByTenant(req.user.tenantId);
     }
 
+    @Post('confirm-session')
+    @Roles(UserRole.ADMIN)
+    @ApiOperation({ summary: 'Confirmar sessão de checkout do Stripe' })
+    @ApiResponse({
+        status: 200,
+        description: 'Sessão confirmada e subscription criada.',
+        type: Subscription,
+    })
+    @ApiResponse({ status: 400, description: 'Sessão inválida ou não completada.' })
+    @ApiResponse({ status: 401, description: 'Não autorizado.' })
+    @ApiResponse({ status: 403, description: 'Proibido.' })
+    confirmSession(@Body() body: { sessionId: string }, @Request() req) {
+        return this.subscriptionsService.confirmCheckoutSession(
+            body.sessionId,
+            req.user.tenantId,
+        );
+    }
+
     @Delete('cancel')
     @Roles(UserRole.ADMIN)
     @ApiOperation({ summary: 'Cancelar assinatura' })

@@ -19,7 +19,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('EventsGateway');
 
-  constructor(private jwtService: JwtService) {}
+  constructor(private jwtService: JwtService) { }
 
   async handleConnection(client: Socket) {
     try {
@@ -56,5 +56,58 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   emitNewMessage(tenantId: string, message: any) {
     const roomName = `tenant-${tenantId}`;
     this.server.to(roomName).emit('new-message', message);
+  }
+
+  // Eventos do WhatsApp - Status da Conexão
+  emitWhatsappQrCode(tenantId: string, channelId: string, qrCode: string) {
+    const roomName = `tenant-${tenantId}`;
+    this.logger.log(`Emitting QR Code for channel ${channelId} to ${roomName}`);
+    this.server.to(roomName).emit('whatsapp:qrcode', {
+      channelId,
+      qrCode,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  emitWhatsappConnected(tenantId: string, channelId: string, data?: any) {
+    const roomName = `tenant-${tenantId}`;
+    this.logger.log(`Emitting WhatsApp connected for channel ${channelId} to ${roomName}`);
+    this.server.to(roomName).emit('whatsapp:connected', {
+      channelId,
+      status: 'CONNECTED',
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  emitWhatsappDisconnected(tenantId: string, channelId: string, reason?: string) {
+    const roomName = `tenant-${tenantId}`;
+    this.logger.log(`Emitting WhatsApp disconnected for channel ${channelId} to ${roomName}`);
+    this.server.to(roomName).emit('whatsapp:disconnected', {
+      channelId,
+      status: 'DISCONNECTED',
+      reason,
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  emitWhatsappReconnecting(tenantId: string, channelId: string) {
+    const roomName = `tenant-${tenantId}`;
+    this.logger.log(`Emitting WhatsApp reconnecting for channel ${channelId} to ${roomName}`);
+    this.server.to(roomName).emit('whatsapp:reconnecting', {
+      channelId,
+      status: 'RECONNECTING',
+      timestamp: new Date().toISOString(),
+    });
+  }
+
+  emitWhatsappConnecting(tenantId: string, channelId: string) {
+    const roomName = `tenant-${tenantId}`;
+    this.logger.log(`Emitting WhatsApp connecting for channel ${channelId} to ${roomName}`);
+    this.server.to(roomName).emit('whatsapp:connecting', {
+      channelId,
+      status: 'CONNECTING',
+      timestamp: new Date().toISOString(),
+    });
   }
 }

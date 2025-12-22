@@ -98,6 +98,35 @@ export class SubscriptionsService {
         });
     }
 
+    async confirmCheckoutSession(sessionId: string, tenantId: string) {
+        // Buscar a sessão no Stripe
+        const session = await this.stripe.checkout.sessions.retrieve(sessionId);
+
+        // Verificar se a sessão pertence ao tenant
+        if (session.client_reference_id !== tenantId) {
+            throw new BadRequestException('Sessão não pertence a este tenant');
+        }
+
+        // Verificar se a sessão foi completada
+        if (session.payment_status !== 'paid' && session.status !== 'complete') {
+            throw new BadRequestException('Sessão ainda não foi completada');
+        }
+
+        // Se já existe subscription para este tenant, retornar ela
+        const existingSubscription = await this.findByTenant(tenantId);
+        if (existingSubscription) {
+            return existingSubscription;
+        }
+
+        // Processar a sessão (similar ao webhook)
+        if (session.subscription) {
+            await this.handleCheckoutCompleted(session);
+            return this.findByTenant(tenantId);
+        }
+
+        throw new BadRequestException('Sessão não possui subscription associada');
+    }
+
     async cancelSubscription(tenantId: string) {
         const subscription = await this.findByTenant(tenantId);
 
@@ -134,6 +163,28 @@ export class SubscriptionsService {
             await this.stripe.subscriptions.retrieve(stripeSubscriptionId);
 
         // Criar ou atualizar subscription no banco
+        // Validar e converter datas do Stripe (podem ser null/undefined em trials)
+        // Verificar se o valor existe E é um número válido antes de criar a Date
+        const stripeSub = stripeSubscription as any;
+        const currentPeriodStart =
+            stripeSub.current_period_start &&
+            typeof stripeSub.current_period_start === 'number' &&
+            !isNaN(stripeSub.current_period_start)
+                ? new Date(stripeSub.current_period_start * 1000)
+                : null;
+        const currentPeriodEnd =
+            stripeSub.current_period_end &&
+            typeof stripeSub.current_period_end === 'number' &&
+            !isNaN(stripeSub.current_period_end)
+                ? new Date(stripeSub.current_period_end * 1000)
+                : null;
+        const trialEnd =
+            stripeSub.trial_end &&
+            typeof stripeSub.trial_end === 'number' &&
+            !isNaN(stripeSub.trial_end)
+                ? new Date(stripeSub.trial_end * 1000)
+                : null;
+
         await this.prisma.subscription.upsert({
             where: { tenantId },
             create: {
@@ -142,45 +193,53 @@ export class SubscriptionsService {
                 stripeCustomerId: session.customer as string,
                 stripeSubscriptionId,
                 status: this.mapStripeStatus(stripeSubscription.status),
-                currentPeriodStart: new Date(
-                    (stripeSubscription as any).current_period_start * 1000,
-                ),
-                currentPeriodEnd: new Date(
-                    (stripeSubscription as any).current_period_end * 1000,
-                ),
-                trialEnd: stripeSubscription.trial_end
-                    ? new Date(stripeSubscription.trial_end * 1000)
-                    : null,
+                currentPeriodStart,
+                currentPeriodEnd,
+                trialEnd,
             },
             update: {
                 planId,
                 stripeCustomerId: session.customer as string,
                 stripeSubscriptionId,
                 status: this.mapStripeStatus(stripeSubscription.status),
-                currentPeriodStart: new Date(
-                    (stripeSubscription as any).current_period_start * 1000,
-                ),
-                currentPeriodEnd: new Date(
-                    (stripeSubscription as any).current_period_end * 1000,
-                ),
-                trialEnd: stripeSubscription.trial_end
-                    ? new Date(stripeSubscription.trial_end * 1000)
-                    : null,
+                currentPeriodStart,
+                currentPeriodEnd,
+                trialEnd,
             },
         });
     }
 
     async handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+        // Validar e converter datas do Stripe (podem ser null/undefined em trials)
+        // Verificar se o valor existe E é um número válido antes de criar a Date
+        const stripeSub = subscription as any;
+        const currentPeriodStart =
+            stripeSub.current_period_start &&
+            typeof stripeSub.current_period_start === 'number' &&
+            !isNaN(stripeSub.current_period_start)
+                ? new Date(stripeSub.current_period_start * 1000)
+                : null;
+        const currentPeriodEnd =
+            stripeSub.current_period_end &&
+            typeof stripeSub.current_period_end === 'number' &&
+            !isNaN(stripeSub.current_period_end)
+                ? new Date(stripeSub.current_period_end * 1000)
+                : null;
+        const canceledAt =
+            stripeSub.canceled_at &&
+            typeof stripeSub.canceled_at === 'number' &&
+            !isNaN(stripeSub.canceled_at)
+                ? new Date(stripeSub.canceled_at * 1000)
+                : null;
+
         await this.prisma.subscription.update({
             where: { stripeSubscriptionId: subscription.id },
             data: {
                 status: this.mapStripeStatus(subscription.status),
-                currentPeriodStart: new Date((subscription as any).current_period_start * 1000),
-                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+                currentPeriodStart,
+                currentPeriodEnd,
                 cancelAtPeriodEnd: subscription.cancel_at_period_end,
-                canceledAt: subscription.canceled_at
-                    ? new Date(subscription.canceled_at * 1000)
-                    : null,
+                canceledAt,
             },
         });
     }

@@ -29,7 +29,7 @@ import { CheckPlanLimit } from '../subscriptions/decorators/check-plan-limit.dec
 
 @ApiTags('Channels')
 @ApiBearerAuth()
-@UseGuards(RolesGuard, SubscriptionGuard, PlanLimitGuard)
+// @UseGuards(RolesGuard, SubscriptionGuard, PlanLimitGuard)
 @Controller('channels')
 export class ChannelsController {
   constructor(private readonly channelsService: ChannelsService) { }
