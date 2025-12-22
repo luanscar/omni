@@ -198,7 +198,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
     return (
       <div className={cn(
-        "absolute -bottom-[14px] flex items-center gap-0.5 bg-background dark:bg-[#202c33] border border-black/5 dark:border-white/10 shadow-sm rounded-full px-1 py-0.5 select-none animate-in zoom-in-50 duration-200 z-10",
+        "absolute -bottom-[18px] flex items-center gap-0.5 bg-background dark:bg-[#202c33] border border-black/5 dark:border-white/10 shadow-sm rounded-full px-1 py-0.5 select-none animate-in zoom-in-50 duration-200 z-10",
         isSent ? "right-4" : "left-4"
       )}>
         <div className="flex -space-x-1">
@@ -222,7 +222,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
       <div className={cn(
         "group flex w-full", 
         isSent ? "justify-end" : "justify-start",
-        hasReactions ? "mb-6" : "mb-1"
+        hasReactions ? "mb-8" : "mb-1"
       )}>
         <div
             className={cn(
