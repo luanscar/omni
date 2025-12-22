@@ -23,7 +23,7 @@ export class MessagesService {
     @Inject(forwardRef(() => WhatsappService))
     private whatsappService: WhatsappService,
     private auditService: AuditService,
-  ) {}
+  ) { }
 
   async create(
     createMessageDto: CreateMessageDto,
@@ -221,31 +221,53 @@ export class MessagesService {
     return message;
   }
 
-  async findByConversation(conversationId: string, tenantId: string) {
+  async findByConversation(
+    conversationId: string,
+    tenantId: string,
+    page: number = 1,
+    limit: number = 20,
+  ) {
     const conversation = await this.prisma.conversation.findFirst({
       where: { id: conversationId, tenantId },
     });
 
     if (!conversation) throw new NotFoundException('Conversa não encontrada.');
 
-    return this.prisma.message.findMany({
-      where: { conversationId },
-      include: {
-        senderUser: { select: { id: true, name: true, avatarUrl: true } },
-        senderContact: {
-          select: { id: true, name: true, profilePicUrl: true },
-        },
-        media: true,
-        quotedMessage: {
-          include: {
-            senderUser: { select: { name: true } },
-            senderContact: { select: { name: true } },
-            media: true, // Inclui média da mensagem citada para exibir thumbnail
+    const skip = (page - 1) * limit;
+
+    const [messages, total] = await Promise.all([
+      this.prisma.message.findMany({
+        where: { conversationId },
+        include: {
+          senderUser: { select: { id: true, name: true, avatarUrl: true } },
+          senderContact: {
+            select: { id: true, name: true, profilePicUrl: true, phoneNumber: true },
+          },
+          media: true,
+          quotedMessage: {
+            include: {
+              senderUser: { select: { name: true } },
+              senderContact: { select: { name: true, phoneNumber: true } },
+              media: true,
+            },
           },
         },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.message.count({ where: { conversationId } }),
+    ]);
+
+    return {
+      data: messages,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'asc' },
-    });
+    };
   }
 
   async forwardMessage(
@@ -302,7 +324,7 @@ export class MessagesService {
               id: true,
               content: true,
               senderUser: { select: { name: true } },
-              senderContact: { select: { name: true } },
+              senderContact: { select: { name: true, phoneNumber: true } },
             },
           },
         },
