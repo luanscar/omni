@@ -29,7 +29,7 @@ export class WhatsappProcessor {
     private storageService: StorageService,
     private eventsGateway: EventsGateway,
     private auditService: AuditService,
-  ) {}
+  ) { }
 
   @Process('process-message')
   async handleIncomingMessage(job: Job<any>) {
@@ -41,7 +41,13 @@ export class WhatsappProcessor {
 
     const remoteJid = message.key.remoteJid;
     const isGroup = remoteJid.endsWith('@g.us');
-    const pushName = message.pushName || (isGroup ? 'Grupo' : 'Desconhecido');
+
+    if (isGroup) {
+      this.logger.debug(`Ignoring group message from ${remoteJid}`);
+      return;
+    }
+
+    const pushName = message.pushName || 'Desconhecido';
     const isFromMe = message.key.fromMe;
 
     this.logger.debug(
