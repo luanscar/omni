@@ -66,31 +66,33 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4 space-y-4" ref={scrollRef}>
-      {hasNextPage && (
-        <div className="flex justify-center py-2">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-            Carregar mensagens antigas
-          </Button>
-        </div>
-      )}
-      
-      {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50">
-              <span className="text-4xl mb-2">💬</span>
-              <p>Nenhuma mensagem ainda.</p>
+    <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
+      <div className="max-w-5xl mx-auto space-y-4">
+        {hasNextPage && (
+          <div className="flex justify-center py-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              Carregar mensagens antigas
+            </Button>
           </div>
-      ) : (
-          messages.map((msg) => (
-            <MessageBubble key={msg.id} message={msg} onReply={() => onReply?.(msg)} />
-          ))
-      )}
+        )}
+        
+        {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50 py-12">
+                <span className="text-4xl mb-2">💬</span>
+                <p>Nenhuma mensagem ainda.</p>
+            </div>
+        ) : (
+            messages.map((msg) => (
+              <MessageBubble key={msg.id} message={msg} onReply={() => onReply?.(msg)} />
+            ))
+        )}
+      </div>
     </div>
   )
 }

@@ -194,14 +194,14 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
       <div className={cn("group flex w-full mb-2", isSent ? "justify-end" : "justify-start")}>
         <div
             className={cn(
-            "relative max-w-[80%] rounded-lg text-sm shadow-sm flex flex-col",
+            "relative max-w-[85%] md:max-w-[70%] rounded-lg text-[14.2px] shadow-sm flex flex-col",
             isSent
                 ? "bg-[#d9fdd3] text-foreground rounded-tr-none"
                 : "bg-background text-foreground rounded-tl-none border"
             )}
         >
             {/* Conteúdo da Mensagem */}
-            <div className="px-3 pt-2 pb-1 relative pr-8">
+            <div className="px-3.5 pt-2 pb-1.5 relative pr-10">
                 {!isSent && (
                     <div className="text-[12px] font-bold opacity-90 mb-0.5 text-[#e542a3] line-clamp-1">
                         {message.senderContact?.name || message.senderContact?.phoneNumber}
