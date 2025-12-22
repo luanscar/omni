@@ -52,10 +52,67 @@ export class WhatsappProcessor {
       `Processing message type: ${getContentType(message.message)} from ${remoteJid} | participant: ${participantJid} | fromMe: ${isFromMe}`,
     );
 
-    // Ignorar reações - não são mensagens tradicionais
+    // Tratar reações de forma especial
     const messageType = getContentType(message.message);
     if (messageType === 'reactionMessage') {
-      this.logger.debug(`Ignoring reaction message`);
+      const reaction = message.message.reactionMessage;
+      const targetProviderId = reaction.key.id;
+      const emoji = reaction.text;
+
+      this.logger.debug(
+        `Processing reaction: ${emoji} for message ${targetProviderId}`,
+      );
+
+      // Buscar a mensagem alvo no banco
+      const targetMessage = await this.prisma.message.findFirst({
+        where: { providerId: targetProviderId, conversation: { tenantId } },
+      });
+
+      if (targetMessage) {
+        const metadata = (targetMessage.metadata as any) || {};
+        const reactions = metadata.reactions || {};
+
+        // Identificar quem reagiu
+        const reactorId = message.key.participant || remoteJid;
+
+        if (!emoji) {
+          // Remover reação se o emoji for vazio
+          delete reactions[reactorId];
+        } else {
+          // Adicionar/Atualizar reação
+          reactions[reactorId] = emoji;
+        }
+
+        metadata.reactions = reactions;
+
+        const updatedMessage = await this.prisma.message.update({
+          where: { id: targetMessage.id },
+          data: { metadata },
+          include: {
+            senderUser: { select: { id: true, name: true, avatarUrl: true } },
+            senderContact: {
+              select: {
+                id: true,
+                name: true,
+                profilePicUrl: true,
+                phoneNumber: true,
+              },
+            },
+            media: true,
+          },
+        });
+
+        // Notificar o frontend sobre a atualização da mensagem
+        this.eventsGateway.emitMessageUpdated(tenantId, updatedMessage);
+
+        this.logger.debug(
+          `Reaction ${emoji} handled for message ${targetMessage.id}`,
+        );
+      } else {
+        this.logger.warn(
+          `Target message for reaction not found: ${targetProviderId}`,
+        );
+      }
       return;
     }
 
@@ -69,7 +126,7 @@ export class WhatsappProcessor {
     }
 
     try {
-      const { content, mediaId, metadata } = await this.extractMessageContent(
+      const { content, mediaId, metadata, type } = await this.extractMessageContent(
         message,
         tenantId,
       );
@@ -190,6 +247,7 @@ export class WhatsappProcessor {
         data: {
           conversationId: conversation.id,
           providerId: message.key.id,
+          type: type,
           content: content,
           mediaId: mediaId,
           metadata: metadata,
@@ -258,13 +316,15 @@ export class WhatsappProcessor {
     content: string | null;
     mediaId: string | null;
     metadata: any;
+    type: any; // MessageType
   }> {
     const msg = message.message;
-    if (!msg) return { content: null, mediaId: null, metadata: null };
+    if (!msg) return { content: null, mediaId: null, metadata: null, type: 'TEXT' };
 
     const type = getContentType(msg);
     let content: string | null = null;
     let mediaId: string | null = null;
+    let messageType: any = 'TEXT';
 
     // Salvar TODA a mensagem original do Baileys no metadata
     const metadata = {
@@ -285,19 +345,22 @@ export class WhatsappProcessor {
           break;
 
         case 'imageMessage':
-          content = msg.imageMessage.caption || '[Imagem]';
+          content = msg.imageMessage.caption || null;
           mediaId = await this.downloadAndSaveMedia(message, 'image', tenantId);
+          messageType = 'IMAGE';
           break;
 
         case 'videoMessage':
-          content = msg.videoMessage.caption || '[Vídeo]';
+          content = msg.videoMessage.caption || null;
           mediaId = await this.downloadAndSaveMedia(message, 'video', tenantId);
+          messageType = 'VIDEO';
           break;
 
         case 'audioMessage':
           const isPtt = msg.audioMessage.ptt;
           content = isPtt ? '[Mensagem de Voz]' : '[Áudio]';
           mediaId = await this.downloadAndSaveMedia(message, 'audio', tenantId);
+          messageType = 'AUDIO';
           break;
 
         case 'documentMessage':
@@ -307,6 +370,7 @@ export class WhatsappProcessor {
             'document',
             tenantId,
           );
+          messageType = 'DOCUMENT';
           break;
 
         case 'stickerMessage':
@@ -316,25 +380,30 @@ export class WhatsappProcessor {
             'sticker',
             tenantId,
           );
+          messageType = 'STICKER';
           break;
 
         case 'contactMessage':
           const contactMsg = msg.contactMessage;
           content = `[Contato]: ${contactMsg.displayName}`;
+          messageType = 'CONTACT';
           break;
 
         case 'locationMessage':
           const { degreesLatitude, degreesLongitude, address, name } =
             msg.locationMessage;
           content = `[Localização]: ${address || name || ''} (${degreesLatitude}, ${degreesLongitude})`;
+          messageType = 'LOCATION';
           break;
 
         case 'reactionMessage':
           content = `[Reação]: ${msg.reactionMessage.text}`;
+          messageType = 'REACTION';
           break;
 
         default:
           content = `[Tipo não suportado: ${type}]`;
+          messageType = 'TEXT';
           break;
       }
     } catch (err) {
@@ -342,9 +411,10 @@ export class WhatsappProcessor {
         `Failed to extract content for type ${type}: ${err.message}`,
       );
       content = `[Erro ao baixar mídia]`;
+      messageType = 'TEXT';
     }
 
-    return { content, mediaId, metadata };
+    return { content, mediaId, metadata, type: messageType };
   }
 
   private async downloadAndSaveMedia(

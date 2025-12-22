@@ -14,6 +14,7 @@ import {
   AuditStatus,
 } from 'prisma/generated/enums';
 import { AuditService } from '../audit/audit.service';
+import { EventsGateway } from '../events/events.gateway';
 
 @Injectable()
 export class MessagesService {
@@ -23,6 +24,7 @@ export class MessagesService {
     @Inject(forwardRef(() => WhatsappService))
     private whatsappService: WhatsappService,
     private auditService: AuditService,
+    private eventsGateway: EventsGateway,
   ) { }
 
   async create(
@@ -126,7 +128,48 @@ export class MessagesService {
           tenantId: tenantId,
         });
 
-        // Retornar resposta sem salvar no banco
+        // Atualizar a mensagem original com a nossa reação no banco
+        const originalMessage = await this.prisma.message.findUnique({
+          where: { id: reaction.key },
+        });
+
+        if (originalMessage) {
+          const metadata = (originalMessage.metadata as any) || {};
+          const reactions = metadata.reactions || {};
+
+          // Usamos 'me' para as reações do agente enviadas via painel
+          if (!reaction.text) {
+            delete reactions['me'];
+          } else {
+            reactions['me'] = reaction.text;
+          }
+
+          metadata.reactions = reactions;
+
+          const updatedMessage = await this.prisma.message.update({
+            where: { id: originalMessage.id },
+            data: { metadata },
+            include: {
+              senderUser: {
+                select: { id: true, name: true, avatarUrl: true },
+              },
+              senderContact: {
+                select: {
+                  id: true,
+                  name: true,
+                  profilePicUrl: true,
+                  phoneNumber: true,
+                },
+              },
+              media: true,
+            },
+          });
+
+          // Notificar o frontend sobre a atualização (reação)
+          this.eventsGateway.emitMessageUpdated(tenantId, updatedMessage);
+        }
+
+        // Retornar resposta sem salvar no banco como mensagem separada
         return {
           id: null,
           type: MessageType.REACTION,

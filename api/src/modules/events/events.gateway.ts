@@ -58,6 +58,11 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(roomName).emit('new-message', message);
   }
 
+  emitMessageUpdated(tenantId: string, message: any) {
+    const roomName = `tenant-${tenantId}`;
+    this.server.to(roomName).emit('message-updated', message);
+  }
+
   // Eventos do WhatsApp - Status da Conexão
   emitWhatsappQrCode(tenantId: string, channelId: string, qrCode: string) {
     const roomName = `tenant-${tenantId}`;
