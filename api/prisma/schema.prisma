@@ -199,12 +199,28 @@ model Channel {
   tenantId String
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  conversations Conversation[]
+  conversations   Conversation[]
+  whatsappSession WhatsappSession?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@map("channels")
+}
+
+model WhatsappSession {
+  id        String  @id @default(uuid())
+  channelId String  @unique
+  channel   Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+
+  // Armazena os dados de autenticação do Baileys em formato JSON
+  // Equivalente aos arquivos creds.json e outros arquivos de autenticação
+  sessionData Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("whatsapp_sessions")
 }
 
 model Contact {

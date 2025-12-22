@@ -10,14 +10,12 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import makeWASocket, {
   DisconnectReason,
-  useMultiFileAuthState,
   fetchLatestBaileysVersion,
   WASocket,
   AnyMessageContent,
 } from '@whiskeysockets/baileys';
 import * as qrcode from 'qrcode';
-import * as fs from 'fs';
-import * as path from 'path';
+import { useDatabaseAuthState } from './database-auth-state';
 import { StorageService } from '../storage/storage.service';
 import { MessageType } from 'prisma/generated/enums';
 
@@ -45,10 +43,9 @@ export class WhatsappService implements OnModuleInit {
     @InjectQueue('whatsapp-events') private queue: Queue,
     @Inject(forwardRef(() => StorageService))
     private storageService: StorageService,
-  ) {}
+  ) { }
 
   async onModuleInit() {
-    this.ensureSessionsDir();
     await this.reconnectSavedSessions();
   }
 
@@ -179,18 +176,14 @@ export class WhatsappService implements OnModuleInit {
 
   // --- MÉTODOS DE SESSÃO ---
 
-  private ensureSessionsDir() {
-    const dir = path.join(process.cwd(), 'sessions');
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-  }
-
   private async reconnectSavedSessions() {
     const channels = await this.prisma.channel.findMany({
       where: { type: 'WHATSAPP', active: true },
+      include: { whatsappSession: true },
     });
     for (const channel of channels) {
-      const sessionPath = path.join(process.cwd(), 'sessions', channel.id);
-      if (fs.existsSync(sessionPath)) {
+      // Reconectar apenas se houver sessão salva no banco de dados
+      if (channel.whatsappSession) {
         this.startSession(channel.id, channel.tenantId);
       }
     }
@@ -210,8 +203,10 @@ export class WhatsappService implements OnModuleInit {
 
     this.connectionStatus.set(channelId, 'CONNECTING');
 
-    const authPath = path.join(process.cwd(), 'sessions', channelId);
-    const { state, saveCreds } = await useMultiFileAuthState(authPath);
+    const { state, saveCreds } = await useDatabaseAuthState(
+      channelId,
+      this.prisma,
+    );
     const { version } = await fetchLatestBaileysVersion();
 
     const socket = makeWASocket({
@@ -292,9 +287,10 @@ export class WhatsappService implements OnModuleInit {
     if (socket) {
       await socket.logout();
       this.cleanUpSession(channelId);
-      const authPath = path.join(process.cwd(), 'sessions', channelId);
-      if (fs.existsSync(authPath))
-        fs.rmSync(authPath, { recursive: true, force: true });
+      // Remover sessão do banco de dados
+      await this.prisma.whatsappSession.deleteMany({
+        where: { channelId },
+      });
       this.connectionStatus.set(channelId, 'DISCONNECTED');
       await this.prisma.channel.update({
         where: { id: channelId },
