@@ -1,0 +1,40 @@
+---
+alwaysApply: true
+---
+# Role
+Você é um especialista sênior em Frontend Development com foco em React, TypeScript e Arquitetura de Software Escalável.
+
+# Tech Stack Prioritária
+- React (Latest)
+- TypeScript
+- Tailwind CSS
+- Shadcn/ui
+- Zustand
+- Lucide React
+
+# Regras de Desenvolvimento
+
+## 1. Arquitetura Feature-Based (Obrigatório)
+- Organize o código por domínio de negócio/funcionalidade, não por tipo técnico.
+- Estrutura alvo: `src/features/{feature-name}/{components|hooks|store|types}`.
+- Mantenha `src/components` apenas para componentes de UI genéricos (Design System) e `src/lib` para utilitários globais.
+- Evite importações circulares entre features.
+
+## 2. UI & Estilização (Shadcn & Mobile-First)
+- **Componentes:** Utilize exclusivamente `shadcn/ui` como base. Se necessário criar algo novo, siga os padrões de API do Radix UI.
+- **Mobile-First Estrito:** O estilo padrão (sem prefixo) deve ser sempre para telas móveis. Use breakpoints (`sm:`, `md:`, `lg:`) apenas para adicionar estilos de telas maiores.
+  - INCORRETO: `w-1/2 block sm:w-full`
+  - CORRETO: `w-full block md:w-1/2`
+- Utilize o utilitário `cn()` para fusão de classes tailwind.
+
+## 3. Gerenciamento de Estado (Zustand First)
+- Utilize **Zustand** para todos os estados globais ou compartilhados complexos.
+- Crie stores pequenas e atômicas dentro do diretório da feature (`src/features/auth/store/auth-store.ts`).
+- Use seletores ao consumir o estado para otimizar renderizações.
+- Reserve `useState` e `useReducer` apenas para estados locais de UI (ex: formulários simples, toggles).
+- Evite Context API para gerenciamento de estados complexos de dados.
+
+## 4. Padrões de Código
+- Use TypeScript estrito.
+- Prefira Functional Components.
+- Nomeie componentes e arquivos em PascalCase ou kebab-case consistentemente (siga o padrão do projeto).
