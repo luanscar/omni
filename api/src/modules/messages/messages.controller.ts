@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Request } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Request, Query } from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { BatchMessageDto } from './dto/batch-message.dto';
@@ -18,7 +18,7 @@ import { ForwardMessageDto, ForwardBatchDto } from './dto/forward-message.dto';
 @ApiBearerAuth()
 @Controller('messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) {}
+  constructor(private readonly messagesService: MessagesService) { }
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
@@ -187,11 +187,15 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
   @ApiResponse({ status: 404, description: 'Conversa não encontrada.' })
   findByConversation(
     @Param('conversationId') conversationId: string,
+    @Query('page') page: number = 1,
+    @Query('limit') limit: number = 20,
     @Request() req,
   ) {
     return this.messagesService.findByConversation(
       conversationId,
       req.user.tenantId,
+      +page,
+      +limit,
     );
   }
 
@@ -214,6 +218,25 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
       req.user.tenantId,
       req.user.userId,
     );
+  }
+
+  @Patch('conversation/:conversationId/mark-as-read')
+  @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
+  @ApiOperation({
+    summary: 'Marcar mensagens como lidas',
+    description: 'Marca todas as mensagens não lidas de uma conversa como lidas.'
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Mensagens marcadas como lidas com sucesso.',
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  @ApiResponse({ status: 404, description: 'Conversa não encontrada.' })
+  async markAsRead(
+    @Param('conversationId') conversationId: string,
+    @Request() req,
+  ) {
+    return this.messagesService.markAsRead(conversationId, req.user.tenantId);
   }
 
   @Post('forward/batch')

@@ -328,6 +328,9 @@ model Conversation {
 
   status ConversationStatus @default(OPEN)
 
+  // Indica se a conversa é um grupo do WhatsApp
+  isGroup Boolean @default(false)
+
   messages Message[]
 
   createdAt DateTime @default(now())

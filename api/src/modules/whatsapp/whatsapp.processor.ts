@@ -594,12 +594,19 @@ export class WhatsappProcessor {
     });
 
     if (!conversation) {
+      // Buscar contato para pegar isGroup de customFields
+      const contact = await this.prisma.contact.findUnique({
+        where: { id: contactId },
+        select: { customFields: true },
+      });
+
       conversation = await this.prisma.conversation.create({
         data: {
           tenantId,
           channelId,
           contactId,
           status: ConversationStatus.PENDING,
+          isGroup: (contact?.customFields as any)?.isGroup || false,
         },
       });
     }

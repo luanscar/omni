@@ -25,7 +25,7 @@ import { UserRole } from 'prisma/generated/enums';
 @ApiBearerAuth()
 @Controller('storage')
 export class StorageController {
-  constructor(private readonly storageService: StorageService) {}
+  constructor(private readonly storageService: StorageService) { }
 
   @Post('upload')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
@@ -217,8 +217,16 @@ A URL é válida por tempo limitado (presigned URL).
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({ status: 403, description: 'Proibido.' })
   @ApiResponse({ status: 404, description: 'Arquivo não encontrado.' })
-  getDownloadUrl(@Param('id') id: string, @Request() req) {
-    return this.storageService.getDownloadUrl(id, req.user.tenantId);
+  getDownloadUrl(
+    @Param('id') id: string,
+    @Request() req,
+    @Query('download') download?: string,
+  ) {
+    return this.storageService.getDownloadUrl(
+      id,
+      req.user.tenantId,
+      download === 'true',
+    );
   }
 
   @Delete(':id')

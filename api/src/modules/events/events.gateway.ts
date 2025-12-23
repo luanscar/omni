@@ -115,4 +115,14 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
       timestamp: new Date().toISOString(),
     });
   }
+
+  // Método genérico para emitir eventos customizados para um tenant
+  emitToTenant(tenantId: string, eventName: string, data: any) {
+    const roomName = `tenant-${tenantId}`;
+    this.logger.log(`Emitting custom event '${eventName}' to ${roomName}`);
+    this.server.to(roomName).emit(eventName, {
+      ...data,
+      timestamp: new Date().toISOString(),
+    });
+  }
 }

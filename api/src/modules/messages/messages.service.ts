@@ -451,4 +451,40 @@ export class MessagesService {
       details: results,
     };
   }
+
+  async markAsRead(conversationId: string, tenantId: string) {
+    // Verificar se a conversa existe e pertence ao tenant
+    const conversation = await this.prisma.conversation.findFirst({
+      where: { id: conversationId, tenantId },
+    });
+
+    if (!conversation) {
+      throw new NotFoundException('Conversa não encontrada.');
+    }
+
+    // Marcar todas as mensagens não lidas desta conversa como lidas
+    const result = await this.prisma.message.updateMany({
+      where: {
+        conversationId,
+        read: false,
+        senderType: MessageSenderType.CONTACT, // Apenas mensagens recebidas
+      },
+      data: {
+        read: true,
+      },
+    });
+
+    console.log(`[MessagesService] Marked ${result.count} messages as read for conversation ${conversationId}`);
+
+    // Emitir evento de atualização para o frontend
+    this.eventsGateway.emitToTenant(tenantId, 'messages-read', {
+      conversationId,
+      count: result.count,
+    });
+
+    return {
+      success: true,
+      markedCount: result.count,
+    };
+  }
 }

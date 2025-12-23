@@ -10,7 +10,7 @@ import { ConversationStatus } from 'prisma/generated/enums';
 
 @Injectable()
 export class ConversationsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   async create(
     createConversationDto: CreateConversationDto,
@@ -47,6 +47,12 @@ export class ConversationsService {
       }
     }
 
+    // Buscar contato para pegar isGroup de customFields
+    const contact = await this.prisma.contact.findUnique({
+      where: { id: contactId },
+      select: { customFields: true },
+    });
+
     return this.prisma.conversation.create({
       data: {
         tenantId,
@@ -54,6 +60,7 @@ export class ConversationsService {
         channelId,
         teamId,
         assigneeId: contactId ? userId : null, // Se o agente abriu o ticket, já atribui a ele
+        isGroup: (contact?.customFields as any)?.isGroup || false, // Extrai isGroup do customFields
       },
       include: {
         contact: true,
@@ -63,8 +70,8 @@ export class ConversationsService {
     });
   }
 
-  findAll(tenantId: string, status?: ConversationStatus) {
-    return this.prisma.conversation.findMany({
+  async findAll(tenantId: string, status?: ConversationStatus) {
+    const conversations = await this.prisma.conversation.findMany({
       where: {
         tenantId,
         ...(status ? { status } : {}), // Filtro opcional por status
@@ -86,6 +93,26 @@ export class ConversationsService {
       },
       orderBy: { updatedAt: 'desc' },
     });
+
+    // Calcular contagem de mensagens não lidas para cada conversa
+    const conversationsWithUnreadCount = await Promise.all(
+      conversations.map(async (conversation) => {
+        const unreadCount = await this.prisma.message.count({
+          where: {
+            conversationId: conversation.id,
+            read: false,
+            senderType: 'CONTACT', // Apenas mensagens recebidas do contato
+          },
+        });
+
+        return {
+          ...conversation,
+          unreadCount,
+        };
+      }),
+    );
+
+    return conversationsWithUnreadCount;
   }
 
   async findOne(id: string, tenantId: string) {

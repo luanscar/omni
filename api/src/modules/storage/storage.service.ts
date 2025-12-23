@@ -33,7 +33,7 @@ export class StorageService implements OnModuleInit {
     });
   }
 
-  async onModuleInit() {}
+  async onModuleInit() { }
 
   // Categorias disponíveis para organização
   private readonly CATEGORIES = {
@@ -132,14 +132,19 @@ export class StorageService implements OnModuleInit {
     return media;
   }
 
-  async getDownloadUrl(id: string, tenantId: string) {
+  async getDownloadUrl(id: string, tenantId: string, forceDownload = false) {
     const media = await this.findOne(id, tenantId);
 
     try {
+      const cleanName = (media.originalName || 'arquivo').replace(/"/g, '');
       const command = new GetObjectCommand({
         Bucket: this.bucketName,
         Key: media.key,
+        ...(forceDownload && {
+          ResponseContentDisposition: `attachment; filename="${cleanName}"`,
+        }),
       });
+      console.log(`[STORAGE DEBUG] Gerando URL para ${media.originalName} -> ${cleanName} (force=${forceDownload})`);
 
       const url = await getSignedUrl(this.s3Client, command, {
         expiresIn: 3600,
