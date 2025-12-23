@@ -9,13 +9,15 @@ import { Loader2 } from 'lucide-react'
 import { useSocketEvent } from '@/hooks/use-socket'
 import { queryKeys } from '@/lib/query/keys'
 import { Message } from '@/lib/api/modules/messages/types'
+import { cn } from '@/lib/utils'
 
 interface MessageListProps {
   conversationId: string
   onReply?: (message: Message) => void
+  disabled?: boolean
 }
 
-export function MessageList({ conversationId, onReply }: MessageListProps) {
+export function MessageList({ conversationId, onReply, disabled = false }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
 
@@ -70,7 +72,13 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-4" ref={scrollRef}>
+    <div
+      className={cn(
+        "flex-1 overflow-y-auto p-4",
+        disabled && "pointer-events-none opacity-50"
+      )}
+      ref={scrollRef}
+    >
       <div className="max-w-6xl mx-auto space-y-4">
         {hasNextPage && (
           <div className="flex justify-center py-2">

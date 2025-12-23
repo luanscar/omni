@@ -297,6 +297,7 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
       <MessageList
         conversationId={conversationId}
         onReply={(msg) => setReplyTo(msg)}
+        disabled={conversation.status === ConversationStatus.PENDING || conversation.status === ConversationStatus.CLOSED}
       />
 
       {/* Input */}
