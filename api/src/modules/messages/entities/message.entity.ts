@@ -30,6 +30,9 @@ class MessageMedia {
   @ApiProperty({ example: 'image.png' })
   fileName: string;
 
+  @ApiProperty({ example: 'My Image.png' })
+  originalName: string;
+
   @ApiProperty({ example: 'image/png' })
   mimeType: string;
 
