@@ -8,11 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { useWhatsAppQr, useWhatsAppStatus } from '@/lib/api/modules/whatsapp'
-import { useSocketEvent } from '@/hooks/use-socket'
-import { useQueryClient } from '@tanstack/react-query'
-import { queryKeys } from '@/lib/query/keys'
 import { Loader2, QrCode } from 'lucide-react'
 
 interface WhatsAppQrDialogProps {
@@ -30,62 +26,26 @@ export function WhatsAppQrDialog({
 }: WhatsAppQrDialogProps) {
   const { data: qrBlob, isLoading: isLoadingQr } = useWhatsAppQr(channelId)
   const { data: status } = useWhatsAppStatus(channelId)
-  const queryClient = useQueryClient()
-  const [qrUrl, setQrUrl] = useState<string | null>(null)
+  const [blobUrl, setBlobUrl] = useState<string | null>(null)
   const [socketQrCode, setSocketQrCode] = useState<string | null>(null)
 
-  // Escutar evento de QR Code via socket
-  useSocketEvent<{
-    channelId: string
-    qrCode: string
-    timestamp: string
-  }>(
-    'whatsapp:qrcode',
-    (data) => {
-      if (data.channelId === channelId) {
-        console.log('QR Code recebido via socket:', data.channelId)
-        setSocketQrCode(data.qrCode)
-        // Invalidar query para garantir sincronização
-        queryClient.invalidateQueries({
-          queryKey: queryKeys.whatsapp.qr(channelId),
-        })
-      }
-    },
-    open // Só escutar quando o dialog estiver aberto
-  )
+  // ... (socket listeners)
 
-  // Escutar evento de conexão estabelecida
-  useSocketEvent<{
-    channelId: string
-    status: string
-    identifier?: string
-    timestamp: string
-  }>(
-    'whatsapp:connected',
-    (data) => {
-      if (data.channelId === channelId && open) {
-        console.log('WhatsApp conectado via socket:', data.channelId)
-        // Fechar dialog após 2 segundos
-        setTimeout(() => {
-          onOpenChange(false)
-        }, 2000)
-      }
-    },
-    open
-  )
+  // ... (socket listeners)
 
-  // Priorizar QR Code do socket se disponível, senão usar o do blob
+  // Gerenciar URL do Blob separadamente para limpeza correta
   useEffect(() => {
-    if (socketQrCode) {
-      setQrUrl(socketQrCode)
-    } else if (qrBlob) {
+    if (qrBlob && !socketQrCode) {
       const url = URL.createObjectURL(qrBlob)
-      setQrUrl(url)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setBlobUrl(url)
       return () => URL.revokeObjectURL(url)
     } else {
-      setQrUrl(null)
+      setBlobUrl(null)
     }
   }, [qrBlob, socketQrCode])
+
+  const qrUrl = socketQrCode || blobUrl
 
   // Fechar automaticamente quando conectar
   useEffect(() => {
@@ -96,15 +56,15 @@ export function WhatsAppQrDialog({
     }
   }, [status?.connected, open, onOpenChange])
 
-  // Limpar QR code do socket quando o dialog fechar
-  useEffect(() => {
-    if (!open) {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) {
       setSocketQrCode(null)
     }
-  }, [open])
+    onOpenChange(isOpen)
+  }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Conectar WhatsApp - {channelName}</DialogTitle>
@@ -130,7 +90,7 @@ export function WhatsAppQrDialog({
                 />
               </div>
               {status?.connected ? (
-                <div className="rounded-md bg-green-500/10 p-3 text-sm text-green-600 dark:text-green-400">
+                <div className="rounded-md bg-primary/10 p-3 text-sm text-primary">
                   ✓ Conectado com sucesso!
                 </div>
               ) : (

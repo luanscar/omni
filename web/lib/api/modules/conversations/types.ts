@@ -59,13 +59,17 @@ export interface Conversation {
   contactId?: string
   channelId?: string
   teamId?: string
+  tags?: string[]
   assigneeId?: string
+  remoteJid?: string
   status: ConversationStatus
+  isGroup?: boolean  // Indica se é grupo WhatsApp
   contact?: ConversationContact
   assignee?: ConversationAssignee
   team?: ConversationTeam
   _count: ConversationCount
   messages: ConversationMessage[]
+  unreadCount?: number
   createdAt: string
   updatedAt: string
 }

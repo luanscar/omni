@@ -36,7 +36,7 @@ export const queryKeys = {
   conversations: {
     all: () => ['conversations'] as const,
     detail: (id: string) => ['conversations', id] as const,
-    byStatus: (status?: string) => ['conversations', status || 'all'] as const,
+    list: (filters: Record<string, unknown>) => ['conversations', 'list', filters] as const,
   },
   messages: {
     all: () => ['messages'] as const,

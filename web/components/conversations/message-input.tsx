@@ -243,7 +243,7 @@ END:VCARD`
         <Button
           variant="default"
           size="icon"
-          className="h-10 w-10 rounded-full bg-green-500 hover:bg-green-600 text-white"
+          className="h-10 w-10 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground"
           onClick={stopRecording}
         >
           <Check className="h-5 w-5" />
@@ -254,12 +254,12 @@ END:VCARD`
 
   return (
     <div className="p-2 pb-4 bg-background border-t">
-      <div className="max-w-6xl mx-auto bg-muted/30 dark:bg-[#202c33] rounded-[16px] overflow-hidden flex flex-col border shadow-sm">
+      <div className="max-w-6xl mx-auto bg-muted rounded-[16px] overflow-hidden flex flex-col border shadow-sm">
         {/* Reply Preview */}
         {replyTo && (
           <div className="flex items-center gap-2 p-2 px-4 bg-black/5 dark:bg-black/20 border-b border-black/5 dark:border-white/5 animate-in slide-in-from-bottom-2">
-            <div className="flex-1 min-w-0 border-l-[4px] border-[#06cf9c] pl-3 py-1">
-              <div className="text-[13px] font-semibold text-[#06cf9c] truncate">
+            <div className="flex-1 min-w-0 border-l-[4px] border-primary pl-3 py-1">
+              <div className="text-[13px] font-semibold text-primary truncate">
                 {replyTo.senderType === 'USER' ? 'Você' : (replyTo.senderContact?.name || 'Cliente')}
               </div>
               <div className="text-[13px] text-muted-foreground truncate">

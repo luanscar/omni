@@ -43,7 +43,9 @@ api.interceptors.response.use(
         status: error.response?.status,
         message: error.message,
         code: error.code,
-        response_data: error.response?.data, // Adicionado para ver o corpo do erro
+        response_data: error.response?.data,
+        // Adicionar informações completas se as propriedades estiverem vazias
+        fullError: !error.config && !error.response ? JSON.stringify(error, null, 2) : undefined,
       })
     }
 

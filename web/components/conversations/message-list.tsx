@@ -18,7 +18,7 @@ interface MessageListProps {
 export function MessageList({ conversationId, onReply }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
-  
+
   // Real-time updates
   useSocketEvent<Message>('new-message', (newMessage) => {
     if (newMessage.conversationId === conversationId) {
@@ -35,7 +35,7 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
       })
     }
   })
-  
+
   const {
     data,
     fetchNextPage,
@@ -48,25 +48,25 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
   // Como é chat, a ordem visual é: antigas em cima, novas em baixo.
   // A API deve retornar as mais recentes na página 1.
   // Então invertemos a ordem das páginas e das mensagens dentro de cada página para renderizar.
-  
+
   const messages = React.useMemo(() => {
     if (!data) return []
     // Flatten pages: página 1 (recentes) ... página N (antigas)
     // Queremos renderizar: Antigas ... Recentes
     const allMessages = data.pages.flatMap((page) => page.data)
-    return [...allMessages].reverse() 
+    return [...allMessages].reverse()
   }, [data])
 
   // Auto-scroll to bottom on initial load via useEffect (pode ser melhorado com layouts específicos de chat)
   useEffect(() => {
-      if(!isLoading && messages.length > 0 && scrollRef.current) {
-          // Apenas scrolla se estivermos perto do fim ou na carga inicial (simplificado)
-          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
-      }
+    if (!isLoading && messages.length > 0 && scrollRef.current) {
+      // Apenas scrolla se estivermos perto do fim ou na carga inicial (simplificado)
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
   }, [messages.length, isLoading])
 
   if (isLoading) {
-      return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin" /></div>
+    return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin" /></div>
   }
 
   return (
@@ -74,9 +74,9 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
       <div className="max-w-6xl mx-auto space-y-4">
         {hasNextPage && (
           <div className="flex justify-center py-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
             >
@@ -85,16 +85,16 @@ export function MessageList({ conversationId, onReply }: MessageListProps) {
             </Button>
           </div>
         )}
-        
+
         {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50 py-12">
-                <span className="text-4xl mb-2">💬</span>
-                <p>Nenhuma mensagem ainda.</p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-50 py-12">
+            <span className="text-4xl mb-2">💬</span>
+            <p>Nenhuma mensagem ainda.</p>
+          </div>
         ) : (
-            messages.map((msg) => (
-              <MessageBubble key={msg.id} message={msg} onReply={() => onReply?.(msg)} />
-            ))
+          messages.map((msg) => (
+            <MessageBubble key={msg.id} message={msg} onReply={() => onReply?.(msg)} />
+          ))
         )}
       </div>
     </div>

@@ -16,6 +16,7 @@ export function SubscriptionBanner() {
   useEffect(() => {
     const dismissedState = localStorage.getItem('subscription-banner-dismissed')
     if (dismissedState === 'true') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissed(true)
     }
   }, [])
@@ -23,6 +24,7 @@ export function SubscriptionBanner() {
   // Limpar estado de dismiss quando houver subscription ativa
   useEffect(() => {
     if (subscription && subscription.status === SubscriptionStatus.ACTIVE) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDismissed(false)
       localStorage.removeItem('subscription-banner-dismissed')
     }

@@ -3,12 +3,24 @@ import { apiClient } from '@/lib/api/client'
 import { queryKeys } from '@/lib/query/keys'
 import type { Conversation } from './types'
 
-export function useConversations(status?: string) {
+export type ConversationFilters = {
+  status?: string
+  search?: string
+  page?: number
+  limit?: number
+}
+
+export function useConversations(filters: ConversationFilters = {}) {
   return useQuery({
-    queryKey: queryKeys.conversations.byStatus(status),
+    queryKey: queryKeys.conversations.list(filters),
     queryFn: () => {
-      const params = status ? `?status=${status}` : ''
-      return apiClient.get<Conversation[]>(`/conversations${params}`)
+      const params = new URLSearchParams()
+      if (filters.status) params.append('status', filters.status)
+      if (filters.search) params.append('search', filters.search)
+      if (filters.page) params.append('page', filters.page.toString())
+      if (filters.limit) params.append('limit', filters.limit.toString())
+
+      return apiClient.get<Conversation[]>(`/conversations?${params.toString()}`)
     },
   })
 }
