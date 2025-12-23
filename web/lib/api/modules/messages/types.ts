@@ -71,7 +71,7 @@ export interface MessageSenderContact {
 export interface MessageMedia {
   id: string
   fileName: string
-  originalName?: string
+  originalName: string
   mimeType: string
   size?: number
   publicUrl: string

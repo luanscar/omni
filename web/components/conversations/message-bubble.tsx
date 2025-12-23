@@ -13,7 +13,7 @@ import {
   DropdownMenuSubContent,
 } from '@/components/ui/dropdown-menu'
 import { MessageSenderType, MessageType } from '@/lib/api/types'
-import { Message } from '@/lib/api/modules/messages'
+import { Message, ContactMessageDto } from '@/lib/api/modules/messages'
 import { ForwardMessageDialog } from './forward-message-dialog'
 import { AuthenticatedMedia } from './authenticated-media'
 import { useCreateMessage } from '@/lib/api/modules/messages'
@@ -66,8 +66,6 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
   const isImageOrVideo = message.type === MessageType.IMAGE || message.type === MessageType.VIDEO
   const hasMedia = !!message.media
-  const isAudio = message.type === MessageType.AUDIO
-  const isDocument = message.type === MessageType.DOCUMENT
   const isContact = message.type === MessageType.CONTACT
 
   const renderMedia = () => {
@@ -77,6 +75,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
     switch (message.type) {
       case MessageType.IMAGE:
+        if (!media) return null
         return (
           <Link
             href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=image&mimeType=${encodeURIComponent(media.mimeType)}`}
@@ -94,6 +93,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         )
 
       case MessageType.VIDEO:
+        if (!media) return null
         return (
           <Link
             href={`/dashboard/conversations/${message.conversationId}/media/${media.id}?type=video&mimeType=${encodeURIComponent(media.mimeType)}`}
@@ -110,6 +110,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         )
 
       case MessageType.AUDIO:
+        if (!media) return null
         return (
           <div className="py-2 px-1">
             <AuthenticatedMedia
@@ -122,6 +123,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         )
 
       case MessageType.DOCUMENT:
+        if (!media) return null
         const isImage =
           media.mimeType.startsWith('image/') ||
           /\.(jpg|jpeg|png|gif|webp)$/i.test(media.originalName || '')
@@ -164,7 +166,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         const metadata = message.metadata as any
         console.log('[CONTACT DEBUG] message.type:', message.type)
         console.log('[CONTACT DEBUG] message.metadata:', metadata)
-        const contactData = metadata?.contact || metadata?.contactMessage || (metadata?.displayName ? metadata : null)
+        const contactData = (metadata?.contact || metadata?.contactMessage || (metadata?.displayName ? metadata : null)) as ContactMessageDto | null
         console.log('[CONTACT DEBUG] contactData:', contactData)
         if (!contactData) {
           console.log('[CONTACT DEBUG] No contact data found, returning null')
@@ -190,11 +192,11 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
             </div>
 
             {/* Footer Actions */}
-            <div className="flex items-center border-t border-black/5 dark:border-white/10 dark:bg-[#202c33]/50">
-              <button className="flex-1 py-3 text-[14px] font-medium text-[#00a884] dark:text-[#06cf9c] hover:bg-black/5 dark:hover:bg-white/5 transition border-r border-black/5 dark:border-white/10">
+            <div className="flex items-center border-t border-border bg-muted/30">
+              <button className="flex-1 py-3 text-[14px] font-medium text-primary hover:bg-muted transition border-r border-border">
                 Conversar
               </button>
-              <button className="flex-1 py-3 text-[14px] font-medium text-[#00a884] dark:text-[#06cf9c] hover:bg-black/5 dark:hover:bg-white/5 transition">
+              <button className="flex-1 py-3 text-[14px] font-medium text-primary hover:bg-muted transition">
                 Adicionar a um grupo
               </button>
             </div>
@@ -215,9 +217,9 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
       : (quoted.senderContact?.name || quoted.senderContact?.phoneNumber || 'Contato')
 
     return (
-      <div className="mb-1 rounded bg-black/5 dark:bg-black/20 border-l-[4px] border-[#06cf9c] overflow-hidden cursor-pointer hover:bg-black/10 dark:hover:bg-black/30 transition-colors">
+      <div className="mb-1 rounded bg-muted/50 border-l-[4px] border-primary overflow-hidden cursor-pointer hover:bg-muted transition-colors">
         <div className="px-2 py-1 flex flex-col min-w-0">
-          <span className="text-[12px] font-bold text-[#06cf9c] truncate">
+          <span className="text-[12px] font-bold text-primary truncate">
             {senderName}
           </span>
           <div className="text-[13px] text-muted-foreground line-clamp-2 leading-snug">
@@ -233,7 +235,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
   }
 
   const renderReactions = () => {
-    const reactions = (message.metadata as any)?.reactions
+    const reactions = (message.metadata as Record<string, unknown>)?.reactions as Record<string, string> | undefined
     if (!reactions || Object.keys(reactions).length === 0) return null
 
     const emojis = Object.values(reactions) as string[]
@@ -241,7 +243,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
 
     return (
       <div className={cn(
-        "absolute -bottom-[18px] flex items-center gap-0.5 bg-background dark:bg-[#202c33] border border-black/5 dark:border-white/10 shadow-sm rounded-full px-1 py-0.5 select-none animate-in zoom-in-50 duration-200 z-10",
+        "absolute -bottom-[18px] flex items-center gap-0.5 bg-background border border-border shadow-sm rounded-full px-1 py-0.5 select-none animate-in zoom-in-50 duration-200 z-10",
         isSent ? "right-4" : "left-4"
       )}>
         <div className="flex -space-x-1">
@@ -258,7 +260,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
     )
   }
 
-  const hasReactions = !!(message.metadata as any)?.reactions && Object.keys((message.metadata as any).reactions).length > 0
+  const hasReactions = !!(message.metadata as Record<string, unknown>)?.reactions && Object.keys((message.metadata as Record<string, unknown>).reactions as Record<string, unknown>).length > 0
 
   return (
     <>
@@ -271,14 +273,14 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
           className={cn(
             "relative max-w-[92%] md:max-w-[85%] rounded-lg text-[14.2px] shadow-sm flex flex-col",
             isSent
-              ? "bg-[#d9fdd3] dark:bg-[#005c4b] text-foreground rounded-tr-none"
-              : "bg-background dark:bg-[#202c33] text-foreground rounded-tl-none border dark:border-none",
+              ? "bg-primary/10 text-foreground rounded-tr-none border border-primary/20"
+              : "bg-muted text-foreground rounded-tl-none border",
             isImageOrVideo && "p-[3px] pb-1"
           )}
         >
           {/* Nome do Remetente (Apenas Recebidas e não-mídia pura) */}
           {!isSent && !isImageOrVideo && (
-            <div className="px-3 pt-2 text-[12px] font-bold opacity-90 text-[#e542a3] line-clamp-1">
+            <div className="px-3 pt-2 text-[12px] font-bold opacity-90 text-accent truncate">
               {message.senderContact?.name || message.senderContact?.phoneNumber}
             </div>
           )}
@@ -310,7 +312,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
             !isSent && isImageOrVideo && "pt-0"
           )}>
             {!isSent && isImageOrVideo && !message.quotedMessage && (
-              <div className="py-1 text-[12px] font-bold opacity-90 text-[#e542a3] line-clamp-1">
+              <div className="py-1 text-[12px] font-bold opacity-90 text-accent truncate">
                 {message.senderContact?.name || message.senderContact?.phoneNumber}
               </div>
             )}
@@ -336,7 +338,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
               {isSent && (
                 <span className={cn(
                   "text-[16px] leading-none",
-                  message.status === 'READ' ? "text-blue-400" : (!message.content && isImageOrVideo ? "text-white/80" : "text-muted-foreground/60")
+                  message.status === 'READ' ? "text-primary" : (!message.content && isImageOrVideo ? "text-white/80" : "text-muted-foreground/60")
                 )}>
                   {message.status === 'READ' || message.status === 'DELIVERED' ? '✓✓' : '✓'}
                 </span>
