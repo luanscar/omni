@@ -163,7 +163,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         )
 
       case MessageType.CONTACT:
-        const metadata = message.metadata as any
+        const metadata = message.metadata as { contact?: ContactMessageDto; contactMessage?: ContactMessageDto; displayName?: string; vcard?: string } | undefined
         console.log('[CONTACT DEBUG] message.type:', message.type)
         console.log('[CONTACT DEBUG] message.metadata:', metadata)
         const contactData = (metadata?.contact || metadata?.contactMessage || (metadata?.displayName ? metadata : null)) as ContactMessageDto | null

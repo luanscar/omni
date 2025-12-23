@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dialog'
 import { useWhatsAppQr, useWhatsAppStatus } from '@/lib/api/modules/whatsapp'
 import { Loader2, QrCode } from 'lucide-react'
+import Image from 'next/image'
 
 interface WhatsAppQrDialogProps {
   open: boolean
@@ -83,7 +84,7 @@ export function WhatsAppQrDialog({
           ) : qrUrl ? (
             <>
               <div className="rounded-lg border-2 border-primary p-4">
-                <img
+                <Image
                   src={qrUrl}
                   alt="QR Code WhatsApp"
                   className="h-64 w-64"

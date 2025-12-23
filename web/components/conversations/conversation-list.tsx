@@ -22,7 +22,6 @@ import {
   Phone,
   Image as ImageIcon,
   FileText,
-  Check,
   CheckCheck
 } from 'lucide-react'
 

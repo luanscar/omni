@@ -1,7 +1,7 @@
 'use client'
 
 import { AuthenticatedMedia } from './authenticated-media'
-import { X, Download, ZoomIn, ZoomOut, Maximize, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X, Download, ZoomIn, ZoomOut, ChevronLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { api } from '@/lib/api/client'
@@ -19,14 +19,14 @@ export function MediaViewer({ mediaId, isFullPage = false, type: propType, mimeT
   const router = useRouter()
   const searchParams = useSearchParams()
   const [zoom, setZoom] = useState(1)
-  
-  const type = propType || (searchParams.get('type') as any) || 'image'
+
+  const type = propType || (searchParams.get('type') as 'image' | 'video' | 'audio' | null) || 'image'
   const mimeType = propMimeType || searchParams.get('mimeType') || 'image/jpeg'
 
   const handleDownload = async () => {
     try {
       const { data } = await api.get(`/storage/${mediaId}/download?download=true`)
-      
+
       if (data.url) {
         const link = document.createElement('a')
         link.href = data.url
@@ -49,14 +49,14 @@ export function MediaViewer({ mediaId, isFullPage = false, type: propType, mimeT
       "relative flex flex-col items-center justify-center w-full h-screen bg-transparent",
       isFullPage && "bg-black"
     )}>
-      
+
       {/* Header com Glassmorphism - Premium Look */}
       <div className="absolute top-0 left-0 right-0 z-[100] flex items-center justify-between p-4 bg-gradient-to-b from-black/80 to-transparent">
         <div className="flex items-center gap-3">
-          <Button 
-            size="icon" 
-            variant="ghost" 
-            className="rounded-full text-white hover:bg-white/10" 
+          <Button
+            size="icon"
+            variant="ghost"
+            className="rounded-full text-white hover:bg-white/10"
             onClick={() => router.back()}
           >
             <ChevronLeft className="h-6 w-6" />
@@ -70,17 +70,17 @@ export function MediaViewer({ mediaId, isFullPage = false, type: propType, mimeT
         <div className="flex items-center gap-2">
           {type === 'image' && (
             <>
-              <Button 
-                size="icon" 
-                variant="secondary" 
+              <Button
+                size="icon"
+                variant="secondary"
                 className="rounded-full bg-white/10 hover:bg-white/20 border-none text-white backdrop-blur-md"
                 onClick={() => setZoom(z => Math.max(1, z - 0.5))}
               >
                 <ZoomOut className="h-4 w-4" />
               </Button>
-              <Button 
-                size="icon" 
-                variant="secondary" 
+              <Button
+                size="icon"
+                variant="secondary"
                 className="rounded-full bg-white/10 hover:bg-white/20 border-none text-white backdrop-blur-md"
                 onClick={() => setZoom(z => Math.min(3, z + 0.5))}
               >
@@ -88,19 +88,19 @@ export function MediaViewer({ mediaId, isFullPage = false, type: propType, mimeT
               </Button>
             </>
           )}
-          
-          <Button 
-            size="icon" 
-            variant="secondary" 
+
+          <Button
+            size="icon"
+            variant="secondary"
             className="rounded-full bg-white/10 hover:bg-white/20 border-none text-white backdrop-blur-md"
             onClick={handleDownload}
           >
             <Download className="h-4 w-4" />
           </Button>
 
-          <Button 
-            size="icon" 
-            variant="destructive" 
+          <Button
+            size="icon"
+            variant="destructive"
             className="rounded-full bg-white/10 hover:bg-red-500/80 border-none text-white backdrop-blur-md transition-colors"
             onClick={() => router.back()}
           >
@@ -111,12 +111,12 @@ export function MediaViewer({ mediaId, isFullPage = false, type: propType, mimeT
 
       {/* Conteúdo Principal */}
       <div className="w-full h-full flex items-center justify-center overflow-auto p-4 md:p-10 custom-scrollbar">
-        <div 
+        <div
           className="transition-transform duration-300 ease-out flex items-center justify-center"
           style={{ transform: `scale(${zoom})` }}
           onDoubleClick={type === 'image' ? toggleZoom : undefined}
         >
-          <AuthenticatedMedia 
+          <AuthenticatedMedia
             mediaId={mediaId}
             type={type}
             mimeType={mimeType}
@@ -133,7 +133,7 @@ export function MediaViewer({ mediaId, isFullPage = false, type: propType, mimeT
       <div className="absolute bottom-4 text-white/40 text-[11px] font-light tracking-wide italic">
         Omni Media Hub • {new Date().toLocaleDateString()}
       </div>
-      
+
       <style jsx global>{`
         .custom-scrollbar::-webkit-scrollbar {
           width: 8px;

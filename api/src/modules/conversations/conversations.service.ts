@@ -10,7 +10,7 @@ import { ConversationStatus } from 'prisma/generated/enums';
 
 @Injectable()
 export class ConversationsService {
-  constructor(private prisma: PrismaService) { }
+  constructor(private prisma: PrismaService) {}
 
   async create(
     createConversationDto: CreateConversationDto,

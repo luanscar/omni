@@ -25,7 +25,7 @@ import { UserRole } from 'prisma/generated/enums';
 @ApiBearerAuth()
 @Controller('storage')
 export class StorageController {
-  constructor(private readonly storageService: StorageService) { }
+  constructor(private readonly storageService: StorageService) {}
 
   @Post('upload')
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)

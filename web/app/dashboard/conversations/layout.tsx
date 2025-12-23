@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, Suspense } from 'react'
 import { Card } from '@/components/ui/card'
 import { ConversationList } from '@/components/conversations/conversation-list'
 
@@ -12,7 +12,9 @@ export default function ConversationsLayout({
       <div className="grid h-full grid-cols-12 gap-0">
         {/* Sidebar - Lista de Conversas (Persistente) */}
         <Card className="col-span-12 md:col-span-5 lg:col-span-4 h-full border-r rounded-none shadow-none overflow-hidden flex flex-col">
-          <ConversationList />
+          <Suspense fallback={<div className="p-4">Carregando conversas...</div>}>
+            <ConversationList />
+          </Suspense>
         </Card>
 
         {/* Área Principal (Conteúdo Dinâmico) */}

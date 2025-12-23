@@ -5,9 +5,9 @@ import { PlansService } from './plans.service';
 import { PrismaService } from 'src/prisma.service';
 
 @Module({
-    imports: [ConfigModule],
-    controllers: [PlansController],
-    providers: [PlansService, PrismaService],
-    exports: [PlansService],
+  imports: [ConfigModule],
+  controllers: [PlansController],
+  providers: [PlansService, PrismaService],
+  exports: [PlansService],
 })
-export class PlansModule { }
+export class PlansModule {}

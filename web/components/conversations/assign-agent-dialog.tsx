@@ -52,7 +52,7 @@ export function AssignAgentDialog({
         updateConversation(
             {
                 id: conversationId,
-                data: { assigneeId: null },
+                data: { assigneeId: undefined },
             },
             {
                 onSuccess: () => {

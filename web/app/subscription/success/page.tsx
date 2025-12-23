@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useConfirmCheckoutSession, useMySubscription } from '@/lib/api/modules/subscriptions'
 import { useQueryClient } from '@tanstack/react-query'
@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
-export default function SubscriptionSuccessPage() {
+function SubscriptionSuccessContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const sessionId = searchParams.get('session_id')
@@ -92,38 +92,47 @@ export default function SubscriptionSuccessPage() {
           setStatus('error')
           setErrorMessage('Assinatura ainda não foi processada. Aguarde alguns instantes e verifique na página de assinaturas.')
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('Erro ao confirmar sessão:', error)
 
         // Se o erro for que a sessão já foi processada ou não pertence ao tenant,
         // tentar apenas verificar se já existe subscription
-        if (error?.response?.status === 400 || error?.response?.status === 404) {
-          // Invalidar cache
-          queryClient.invalidateQueries({
-            queryKey: queryKeys.subscriptions.my(),
-          })
-          // Aguardar e verificar se já existe subscription (webhook pode ter processado)
-          await new Promise((resolve) => setTimeout(resolve, 2000))
-          const { data: sub } = await refetch()
-
-          if (sub) {
-            setStatus('success')
+        if (error && typeof error === 'object' && 'response' in error) {
+          const axiosError = error as { response?: { status?: number; data?: { message?: string } }; message?: string }
+          
+          if (axiosError.response?.status === 400 || axiosError.response?.status === 404) {
+            // Invalidar cache
             queryClient.invalidateQueries({
               queryKey: queryKeys.subscriptions.my(),
             })
-            setTimeout(() => {
-              router.push('/dashboard/subscriptions')
-            }, 2000)
-            return
-          }
-        }
+            // Aguardar e verificar se já existe subscription (webhook pode ter processado)
+            await new Promise((resolve) => setTimeout(resolve, 2000))
+            const { data: sub } = await refetch()
 
-        setStatus('error')
-        setErrorMessage(
-          error?.response?.data?.message ||
-          error?.message ||
-          'Erro ao processar assinatura. Tente novamente.'
-        )
+            if (sub) {
+              setStatus('success')
+              queryClient.invalidateQueries({
+                queryKey: queryKeys.subscriptions.my(),
+              })
+              setTimeout(() => {
+                router.push('/dashboard/subscriptions')
+              }, 2000)
+              return
+            }
+          }
+
+          setStatus('error')
+          setErrorMessage(
+            axiosError.response?.data?.message ||
+            axiosError.message ||
+            'Erro ao processar assinatura. Tente novamente.'
+          )
+        } else {
+          setStatus('error')
+          setErrorMessage(
+            error instanceof Error ? error.message : 'Erro ao processar assinatura. Tente novamente.'
+          )
+        }
       }
     }
 
@@ -193,3 +202,18 @@ export default function SubscriptionSuccessPage() {
   )
 }
 
+export default function SubscriptionSuccessPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="flex items-center justify-center py-8">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <SubscriptionSuccessContent />
+    </Suspense>
+  )
+}

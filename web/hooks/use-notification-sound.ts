@@ -7,7 +7,7 @@ import { useCallback } from 'react'
 export function useNotificationSound() {
     const playSound = useCallback(() => {
         try {
-            const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+            const audioContext = new (window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)()
 
             // Função para criar um beep
             const createBeep = (startTime: number, frequency: number, duration: number) => {

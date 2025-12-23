@@ -7,9 +7,9 @@ import { PrismaService } from 'src/prisma.service';
 import { PlansModule } from '../plans/plans.module';
 
 @Module({
-    imports: [ConfigModule, PlansModule],
-    controllers: [SubscriptionsController, StripeWebhookController],
-    providers: [SubscriptionsService, PrismaService],
-    exports: [SubscriptionsService],
+  imports: [ConfigModule, PlansModule],
+  controllers: [SubscriptionsController, StripeWebhookController],
+  providers: [SubscriptionsService, PrismaService],
+  exports: [SubscriptionsService],
 })
-export class SubscriptionsModule { }
+export class SubscriptionsModule {}

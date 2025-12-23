@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState, useEffect, useRef, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Header } from '@/components/header'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,12 +14,11 @@ import { Check, Loader2, Sparkles, Zap, Crown } from 'lucide-react'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
 
-export default function SubscriptionsPage() {
-  const router = useRouter()
+function SubscriptionsContent() {
   const searchParams = useSearchParams()
   const queryClient = useQueryClient()
   const { data: plans, isLoading: isLoadingPlans } = usePlans()
-  const { data: subscription, isLoading: isLoadingSubscription, refetch } = useMySubscription()
+  const { data: subscription, refetch } = useMySubscription()
   const createCheckout = useCreateCheckoutSession()
   const cancelSubscription = useCancelSubscription()
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null)
@@ -87,7 +86,7 @@ export default function SubscriptionsPage() {
             payload.successUrl = successUrl
             payload.cancelUrl = cancelUrl
           }
-        } catch (urlError) {
+        } catch {
           // Se não conseguir criar URLs válidas, enviar sem elas (são opcionais)
           console.warn('URLs não puderam ser geradas, enviando sem elas')
         }
@@ -105,32 +104,39 @@ export default function SubscriptionsPage() {
       } else {
         throw new Error('URL de checkout não retornada')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Erro ao criar sessão de checkout:', error)
-      console.error('Detalhes do erro:', {
-        status: error?.response?.status,
-        data: error?.response?.data,
-        message: error?.message,
-      })
       
       let errorMessage = 'Erro ao processar assinatura. Tente novamente.'
       
-      if (error?.response?.status === 400) {
-        const errorData = error?.response?.data
-        if (Array.isArray(errorData?.message)) {
-          errorMessage = errorData.message.join(', ')
-        } else if (errorData?.message) {
-          errorMessage = errorData.message
-        } else {
-          errorMessage = 'Dados inválidos. Verifique se o plano existe e se você tem permissão.'
+      if (error && typeof error === 'object' && 'response' in error) {
+        const axiosError = error as { response?: { status?: number; data?: { message?: string | string[] } }; message?: string }
+        console.error('Detalhes do erro:', {
+          status: axiosError.response?.status,
+          data: axiosError.response?.data,
+          message: axiosError.message,
+        })
+        
+        if (axiosError.response?.status === 400) {
+          const errorData = axiosError.response?.data
+          if (Array.isArray(errorData?.message)) {
+            errorMessage = errorData.message.join(', ')
+          } else if (errorData?.message) {
+            errorMessage = errorData.message
+          } else {
+            errorMessage = 'Dados inválidos. Verifique se o plano existe e se você tem permissão.'
+          }
+        } else if (axiosError.response?.status === 403) {
+          errorMessage = 'Você não tem permissão para criar assinaturas. Apenas administradores podem assinar planos.'
+        } else if (axiosError.response?.status === 404) {
+          errorMessage = 'Plano não encontrado.'
+        } else if (axiosError.response?.data?.message) {
+          const message = axiosError.response.data.message
+          errorMessage = Array.isArray(message) ? message.join(', ') : message
+        } else if (axiosError.message) {
+          errorMessage = axiosError.message
         }
-      } else if (error?.response?.status === 403) {
-        errorMessage = 'Você não tem permissão para criar assinaturas. Apenas administradores podem assinar planos.'
-      } else if (error?.response?.status === 404) {
-        errorMessage = 'Plano não encontrado.'
-      } else if (error?.response?.data?.message) {
-        errorMessage = error.response.data.message
-      } else if (error?.message) {
+      } else if (error instanceof Error) {
         errorMessage = error.message
       }
       
@@ -492,3 +498,14 @@ function PlanCard({
   )
 }
 
+export default function SubscriptionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    }>
+      <SubscriptionsContent />
+    </Suspense>
+  )
+}

@@ -13,10 +13,10 @@ interface AuthenticatedMediaProps {
   onClick?: () => void
 }
 
-export function AuthenticatedMedia({ 
-  mediaId, 
-  mimeType, 
-  alt, 
+export function AuthenticatedMedia({
+  mediaId,
+  mimeType,
+  alt,
   className,
   type,
   onClick
@@ -34,7 +34,7 @@ export function AuthenticatedMedia({
 
         // Pegar a URL presigned do backend
         const response = await api.get(`/storage/${mediaId}/download`)
-        
+
         if (response.data && response.data.url) {
           console.log('[MEDIA DEBUG] URL assinada recebida:', response.data.url)
           setBlobUrl(response.data.url)
@@ -42,7 +42,7 @@ export function AuthenticatedMedia({
           console.error('[MEDIA DEBUG] URL não encontrada na resposta do backend')
           setError(true)
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('[MEDIA DEBUG] Erro ao buscar URL da mídia:', err)
         setError(true)
       } finally {
@@ -64,13 +64,13 @@ export function AuthenticatedMedia({
   if (error || !blobUrl) {
     return (
       <div className="flex items-center justify-center p-8 bg-destructive/10 rounded-lg text-destructive text-sm text-center">
-        Erro ao carregar mídia<br/>
+        Erro ao carregar mídia<br />
         <span className="text-[10px] opacity-50">{mediaId}</span>
       </div>
     )
   }
 
-  const handleMediaError = (e: any) => {
+  const handleMediaError = (e: React.SyntheticEvent<HTMLImageElement | HTMLVideoElement | HTMLAudioElement, Event>) => {
     console.error(`[MEDIA DEBUG] Erro de renderização no elemento ${type}:`, e)
     // Se falhar ao carregar, pode ser que a URL expirou ou o LocalStack está inacessível
   }
@@ -78,6 +78,7 @@ export function AuthenticatedMedia({
   switch (type) {
     case 'image':
       return (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={blobUrl}
           alt={alt || 'Imagem'}
@@ -87,7 +88,7 @@ export function AuthenticatedMedia({
           onLoad={() => console.log('[MEDIA DEBUG] Imagem carregada com sucesso')}
         />
       )
-    
+
     case 'video':
       return (
         <video
@@ -100,11 +101,11 @@ export function AuthenticatedMedia({
           Seu navegador não suporta vídeo.
         </video>
       )
-    
+
     case 'audio':
       return (
-        <audio 
-          controls 
+        <audio
+          controls
           className={className}
           onError={handleMediaError}
         >
@@ -112,7 +113,7 @@ export function AuthenticatedMedia({
           Seu navegador não suporta áudio.
         </audio>
       )
-    
+
     default:
       return null
   }

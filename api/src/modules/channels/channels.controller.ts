@@ -7,7 +7,6 @@ import {
   Param,
   Delete,
   Request,
-  UseGuards,
 } from '@nestjs/common';
 import { ChannelsService } from './channels.service';
 import { CreateChannelDto } from './dto/create-channel.dto';
@@ -19,12 +18,8 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { Channel } from './entities/channel.entity';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { Roles } from 'src/common/decorators/roles.decorator';
 import { UserRole } from 'prisma/generated/enums';
-import { RolesGuard } from '../auth/roles.guard';
-import { SubscriptionGuard } from '../subscriptions/guards/subscription.guard';
-import { PlanLimitGuard } from '../subscriptions/guards/plan-limit.guard';
 import { CheckPlanLimit } from '../subscriptions/decorators/check-plan-limit.decorator';
 
 @ApiTags('Channels')
@@ -32,7 +27,7 @@ import { CheckPlanLimit } from '../subscriptions/decorators/check-plan-limit.dec
 // @UseGuards(RolesGuard, SubscriptionGuard, PlanLimitGuard)
 @Controller('channels')
 export class ChannelsController {
-  constructor(private readonly channelsService: ChannelsService) { }
+  constructor(private readonly channelsService: ChannelsService) {}
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER)
@@ -47,7 +42,7 @@ export class ChannelsController {
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({
     status: 403,
-    description: 'Limite de canais do plano atingido ou assinatura inativa.'
+    description: 'Limite de canais do plano atingido ou assinatura inativa.',
   })
   create(@Body() createChannelDto: CreateChannelDto, @Request() req) {
     // O tenantId vem automaticamente do JWT (injetado pelo JwtStrategy)

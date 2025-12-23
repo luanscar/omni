@@ -48,22 +48,28 @@ export function ChannelForm({
   const [token, setToken] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  // Reset form state when dialog opens or channel changes
+  // Note: This pattern is acceptable for form initialization in dialogs
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    if (open) {
-      if (channel) {
-        setName(channel.name || '')
-        setType(channel.type)
-        setIdentifier(channel.identifier || '')
-        setToken('') // Não mostrar token por segurança
-      } else {
-        setName('')
-        setType(ChannelType.WHATSAPP)
-        setIdentifier('')
-        setToken('')
-      }
-      setError(null)
+    if (!open) {
+      return
     }
+
+    if (channel) {
+      setName(channel.name || '')
+      setType(channel.type)
+      setIdentifier(channel.identifier || '')
+      setToken('') // Não mostrar token por segurança
+    } else {
+      setName('')
+      setType(ChannelType.WHATSAPP)
+      setIdentifier('')
+      setToken('')
+    }
+    setError(null)
   }, [channel, open])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()

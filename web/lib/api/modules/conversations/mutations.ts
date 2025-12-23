@@ -57,21 +57,32 @@ export function useMarkMessagesAsRead() {
         queryKey: queryKeys.conversations.all(),
       })
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       // Tentar extrair todas as propriedades possíveis do erro
-      const errorDetails = {
-        message: error?.message,
-        response: error?.response?.data,
-        status: error?.response?.status,
-        name: error?.name,
-        stack: error?.stack,
-        code: error?.code,
-        config: error?.config,
-        toString: error?.toString?.(),
-        keys: Object.keys(error || {}),
-        ownProps: Object.getOwnPropertyNames(error || {}),
-        rawError: error,
+      const errorDetails: Record<string, unknown> = {}
+      
+      if (error && typeof error === 'object') {
+        const err = error as Record<string, unknown>
+        errorDetails.message = err.message
+        if (err.response && typeof err.response === 'object') {
+          const response = err.response as Record<string, unknown>
+          errorDetails.response = response.data
+          errorDetails.status = response.status
+        }
+        errorDetails.name = err.name
+        errorDetails.stack = err.stack
+        errorDetails.code = err.code
+        errorDetails.config = err.config
+        if (typeof err.toString === 'function') {
+          errorDetails.toStringValue = err.toString()
+        }
+        errorDetails.keys = Object.keys(err)
+        errorDetails.ownProps = Object.getOwnPropertyNames(err)
+        errorDetails.rawError = err
+      } else {
+        errorDetails.rawError = error
       }
+      
       console.error('Error marking messages as read:', errorDetails)
     },
   })

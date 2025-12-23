@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from 'src/prisma.service';
 import { CreatePlanDto } from './dto/create-plan.dto';
@@ -8,122 +12,120 @@ import Stripe from 'stripe';
 
 @Injectable()
 export class PlansService {
-    private stripe: Stripe;
+  private stripe: Stripe;
 
-    constructor(
-        private prisma: PrismaService,
-        private configService: ConfigService,
-    ) {
-        this.stripe = new Stripe(
-            this.configService.get<string>('STRIPE_SECRET_KEY'),
-            { apiVersion: '2025-12-15.clover' },
-        );
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {
+    this.stripe = new Stripe(
+      this.configService.get<string>('STRIPE_SECRET_KEY'),
+      { apiVersion: '2025-12-15.clover' },
+    );
+  }
+
+  async create(data: CreatePlanDto) {
+    // Verificar se já existe um plano do mesmo tipo
+    const existingPlan = await this.prisma.subscriptionPlan.findUnique({
+      where: { type: data.type },
+    });
+
+    if (existingPlan) {
+      throw new ConflictException(`Já existe um plano do tipo ${data.type}.`);
     }
 
-    async create(data: CreatePlanDto) {
-        // Verificar se já existe um plano do mesmo tipo
-        const existingPlan = await this.prisma.subscriptionPlan.findUnique({
-            where: { type: data.type },
-        });
+    let stripePriceId = data.stripePriceId;
+    let stripeProductId = data.stripeProductId;
 
-        if (existingPlan) {
-            throw new ConflictException(
-                `Já existe um plano do tipo ${data.type}.`
-            );
-        }
+    // Se não foi fornecido IDs do Stripe, criar automaticamente
+    if (!stripePriceId || !stripeProductId) {
+      // Criar produto no Stripe
+      const product = await this.stripe.products.create({
+        name: data.name,
+        description: data.description || `Plano ${data.type}`,
+        metadata: {
+          planType: data.type,
+          maxUsers: data.maxUsers.toString(),
+          maxChannels: data.maxChannels.toString(),
+          maxConversations: data.maxConversations.toString(),
+        },
+      });
 
-        let stripePriceId = data.stripePriceId;
-        let stripeProductId = data.stripeProductId;
+      stripeProductId = product.id;
 
-        // Se não foi fornecido IDs do Stripe, criar automaticamente
-        if (!stripePriceId || !stripeProductId) {
-            // Criar produto no Stripe
-            const product = await this.stripe.products.create({
-                name: data.name,
-                description: data.description || `Plano ${data.type}`,
-                metadata: {
-                    planType: data.type,
-                    maxUsers: data.maxUsers.toString(),
-                    maxChannels: data.maxChannels.toString(),
-                    maxConversations: data.maxConversations.toString(),
-                },
-            });
+      // Criar preço recorrente mensal
+      const price = await this.stripe.prices.create({
+        product: stripeProductId,
+        unit_amount: data.priceMonthly,
+        currency: 'brl',
+        recurring: {
+          interval: 'month',
+        },
+        metadata: {
+          planType: data.type,
+        },
+      });
 
-            stripeProductId = product.id;
-
-            // Criar preço recorrente mensal
-            const price = await this.stripe.prices.create({
-                product: stripeProductId,
-                unit_amount: data.priceMonthly,
-                currency: 'brl',
-                recurring: {
-                    interval: 'month',
-                },
-                metadata: {
-                    planType: data.type,
-                },
-            });
-
-            stripePriceId = price.id;
-        }
-
-        // Criar plano no banco com os IDs do Stripe
-        return this.prisma.subscriptionPlan.create({
-            data: {
-                name: data.name,
-                type: data.type,
-                description: data.description,
-                maxUsers: data.maxUsers,
-                maxChannels: data.maxChannels,
-                maxConversations: data.maxConversations,
-                stripePriceId,
-                stripeProductId,
-                priceMonthly: data.priceMonthly,
-            },
-        });
+      stripePriceId = price.id;
     }
 
-    async findAll() {
-        return this.prisma.subscriptionPlan.findMany({
-            where: { active: true },
-            orderBy: { priceMonthly: 'asc' },
-        });
+    // Criar plano no banco com os IDs do Stripe
+    return this.prisma.subscriptionPlan.create({
+      data: {
+        name: data.name,
+        type: data.type,
+        description: data.description,
+        maxUsers: data.maxUsers,
+        maxChannels: data.maxChannels,
+        maxConversations: data.maxConversations,
+        stripePriceId,
+        stripeProductId,
+        priceMonthly: data.priceMonthly,
+      },
+    });
+  }
+
+  async findAll() {
+    return this.prisma.subscriptionPlan.findMany({
+      where: { active: true },
+      orderBy: { priceMonthly: 'asc' },
+    });
+  }
+
+  async findOne(id: string) {
+    const plan = await this.prisma.subscriptionPlan.findUnique({
+      where: { id },
+    });
+
+    if (!plan) {
+      throw new NotFoundException('Plano não encontrado');
     }
 
-    async findOne(id: string) {
-        const plan = await this.prisma.subscriptionPlan.findUnique({
-            where: { id },
-        });
+    return plan;
+  }
 
-        if (!plan) {
-            throw new NotFoundException('Plano não encontrado');
-        }
+  async findByType(type: PlanType) {
+    return this.prisma.subscriptionPlan.findUnique({
+      where: { type },
+    });
+  }
 
-        return plan;
-    }
+  async update(id: string, data: UpdatePlanDto) {
+    await this.findOne(id); // Valida se existe
 
-    async findByType(type: PlanType) {
-        return this.prisma.subscriptionPlan.findUnique({
-            where: { type },
-        });
-    }
+    return this.prisma.subscriptionPlan.update({
+      where: { id },
+      data,
+    });
+  }
 
-    async update(id: string, data: UpdatePlanDto) {
-        await this.findOne(id); // Valida se existe
+  async remove(id: string) {
+    await this.findOne(id);
 
-        return this.prisma.subscriptionPlan.update({
-            where: { id },
-            data,
-        });
-    }
-
-    async remove(id: string) {
-        await this.findOne(id);
-
-        // Soft delete - apenas desativa
-        return this.prisma.subscriptionPlan.update({
-            where: { id },
-            data: { active: false },
-        });
-    }
+    // Soft delete - apenas desativa
+    return this.prisma.subscriptionPlan.update({
+      where: { id },
+      data: { active: false },
+    });
+  }
 }

@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog'
-import { ReactNode, useState, useEffect } from 'react'
+import { ReactNode, useState } from 'react'
 
 export function Modal({ children }: { children: ReactNode }) {
   const router = useRouter()

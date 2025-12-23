@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Patch, Body, Param, Request, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Request,
+  Query,
+} from '@nestjs/common';
 import { MessagesService } from './messages.service';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { BatchMessageDto } from './dto/batch-message.dto';
@@ -18,7 +27,7 @@ import { ForwardMessageDto, ForwardBatchDto } from './dto/forward-message.dto';
 @ApiBearerAuth()
 @Controller('messages')
 export class MessagesController {
-  constructor(private readonly messagesService: MessagesService) { }
+  constructor(private readonly messagesService: MessagesService) {}
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
@@ -224,7 +233,8 @@ Envia múltiplas mensagens de uma vez (útil para álbuns de fotos).
   @Roles(UserRole.ADMIN, UserRole.MANAGER, UserRole.AGENT)
   @ApiOperation({
     summary: 'Marcar mensagens como lidas',
-    description: 'Marca todas as mensagens não lidas de uma conversa como lidas.'
+    description:
+      'Marca todas as mensagens não lidas de uma conversa como lidas.',
   })
   @ApiResponse({
     status: 200,

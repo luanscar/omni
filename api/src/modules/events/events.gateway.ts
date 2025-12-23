@@ -19,7 +19,7 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   private logger = new Logger('EventsGateway');
 
-  constructor(private jwtService: JwtService) { }
+  constructor(private jwtService: JwtService) {}
 
   async handleConnection(client: Socket) {
     try {
@@ -76,7 +76,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitWhatsappConnected(tenantId: string, channelId: string, data?: any) {
     const roomName = `tenant-${tenantId}`;
-    this.logger.log(`Emitting WhatsApp connected for channel ${channelId} to ${roomName}`);
+    this.logger.log(
+      `Emitting WhatsApp connected for channel ${channelId} to ${roomName}`,
+    );
     this.server.to(roomName).emit('whatsapp:connected', {
       channelId,
       status: 'CONNECTED',
@@ -85,9 +87,15 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
     });
   }
 
-  emitWhatsappDisconnected(tenantId: string, channelId: string, reason?: string) {
+  emitWhatsappDisconnected(
+    tenantId: string,
+    channelId: string,
+    reason?: string,
+  ) {
     const roomName = `tenant-${tenantId}`;
-    this.logger.log(`Emitting WhatsApp disconnected for channel ${channelId} to ${roomName}`);
+    this.logger.log(
+      `Emitting WhatsApp disconnected for channel ${channelId} to ${roomName}`,
+    );
     this.server.to(roomName).emit('whatsapp:disconnected', {
       channelId,
       status: 'DISCONNECTED',
@@ -98,7 +106,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitWhatsappReconnecting(tenantId: string, channelId: string) {
     const roomName = `tenant-${tenantId}`;
-    this.logger.log(`Emitting WhatsApp reconnecting for channel ${channelId} to ${roomName}`);
+    this.logger.log(
+      `Emitting WhatsApp reconnecting for channel ${channelId} to ${roomName}`,
+    );
     this.server.to(roomName).emit('whatsapp:reconnecting', {
       channelId,
       status: 'RECONNECTING',
@@ -108,7 +118,9 @@ export class EventsGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   emitWhatsappConnecting(tenantId: string, channelId: string) {
     const roomName = `tenant-${tenantId}`;
-    this.logger.log(`Emitting WhatsApp connecting for channel ${channelId} to ${roomName}`);
+    this.logger.log(
+      `Emitting WhatsApp connecting for channel ${channelId} to ${roomName}`,
+    );
     this.server.to(roomName).emit('whatsapp:connecting', {
       channelId,
       status: 'CONNECTING',

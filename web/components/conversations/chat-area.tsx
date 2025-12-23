@@ -2,7 +2,6 @@
 
 import { useConversation, useMarkMessagesAsRead } from '@/lib/api/modules/conversations'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,11 +14,11 @@ import {
 import { MessageList } from './message-list'
 import { MessageInput } from './message-input'
 import { AssignAgentDialog } from './assign-agent-dialog'
+import { AvatarImageWithStorage } from '@/components/avatar-image'
 import { useState, useEffect } from 'react'
 import { Message } from '@/lib/api/modules/messages/types'
 import { useSocketEvent } from '@/hooks/use-socket'
 import { cn } from '@/lib/utils'
-import { getStorageUrl } from '@/lib/utils/storage'
 import { Search, MoreVertical, UserPlus, X, Archive, Trash2 } from 'lucide-react'
 
 export function ChatArea({ conversationId }: { conversationId: string }) {
@@ -38,7 +37,7 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
   }, [conversationId]) // Removido markAsRead para evitar loops
 
   // Marcar automaticamente como lida quando chegar nova mensagem com o chat aberto
-  useSocketEvent('new-message', (message: any) => {
+  useSocketEvent<{ conversationId?: string }>('new-message', (message) => {
     if (message?.conversationId === conversationId) {
       console.log('[ChatArea] New message received in open chat, marking as read')
       markAsRead(conversationId)
@@ -83,27 +82,27 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="relative">
-                  <Avatar className={cn(
-                    "h-10 w-10 flex-shrink-0 transition-all cursor-help",
-                    // Ring e shadow baseados no status da conversa
-                    conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
-                    conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
-                    conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
-                  )}>
-                    <AvatarImage src={getStorageUrl(conversation.contact?.profilePicUrl)} />
-                    <AvatarFallback className="text-sm">
-                      {conversation.contact?.name?.slice(0, 2).toUpperCase() || 'C'}
-                    </AvatarFallback>
-                  </Avatar>
+                  <AvatarImageWithStorage
+                    src={conversation.contact?.profilePicUrl}
+                    alt={conversation.contact?.name || 'Contato'}
+                    fallback={conversation.contact?.name?.slice(0, 2).toUpperCase() || 'C'}
+                    className={cn(
+                      "h-10 w-10 flex-shrink-0 transition-all cursor-help",
+                      // Ring e shadow baseados no status da conversa
+                      conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
+                      conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
+                      conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
+                    )}
+                  />
 
                   {/* Mini avatar do agente atribuído */}
                   {conversation.assignee && (
-                    <Avatar className="absolute -bottom-1 -right-1 h-6 w-6 border-2 border-background shadow-md">
-                      <AvatarImage src={getStorageUrl(conversation.assignee.avatarUrl)} />
-                      <AvatarFallback className="text-[10px] bg-primary text-primary-foreground">
-                        {conversation.assignee.name?.slice(0, 2).toUpperCase() || 'A'}
-                      </AvatarFallback>
-                    </Avatar>
+                    <AvatarImageWithStorage
+                      src={conversation.assignee.avatarUrl}
+                      alt={conversation.assignee.name || 'Agente'}
+                      fallback={conversation.assignee.name?.slice(0, 2).toUpperCase() || 'A'}
+                      className="absolute -bottom-1 -right-1 h-6 w-6 border-2 border-background shadow-md"
+                    />
                   )}
                 </div>
               </TooltipTrigger>

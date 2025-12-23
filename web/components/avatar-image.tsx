@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useStorageDownloadUrl } from '@/lib/api/modules/storage'
+import { extractStorageId, getStorageUrl } from '@/lib/utils/storage'
 
 interface AvatarImageProps {
   src?: string | null
@@ -24,30 +25,28 @@ export function AvatarImageWithStorage({
 }: AvatarImageProps) {
   const [imageError, setImageError] = useState(false)
 
-  // Extrair ID do storage se for um caminho relativo
-  // Formato esperado: /storage/{id}/download
-  const storageId = src?.startsWith('/storage/')
-    ? src.replace('/storage/', '').replace('/download', '').split('/')[0]
-    : null
+  // Extrair ID do storage usando a função utilitária
+  const storageId = extractStorageId(src || null)
 
   // Buscar URL assinada se for do storage
-  const { data: downloadData, error: downloadError } = useStorageDownloadUrl(
+  const { data: downloadData, error: downloadError, isLoading } = useStorageDownloadUrl(
     storageId || '',
   )
 
   // Determinar a URL final
   // Se for do storage e tiver a URL assinada, usa ela
-  // Caso contrário, usa a URL original (pode ser externa ou undefined)
-  const imageUrl = storageId && downloadData?.url && !downloadError
-    ? downloadData.url 
-    : (src && !src.startsWith('/storage/') ? src : undefined)
+  // Caso contrário, se não for do storage (URL externa ou completa), usa diretamente ou converte se for relativa
+  // Se for do storage mas ainda estiver carregando, retorna undefined para mostrar fallback temporariamente
+  const imageUrl = storageId
+    ? (downloadData?.url && !downloadError ? downloadData.url : undefined)
+    : (src ? (src.startsWith('http://') || src.startsWith('https://') ? src : getStorageUrl(src)) : undefined)
 
-  // Se houver erro ao carregar a imagem ou se não houver URL, mostra fallback
-  const shouldShowFallback = imageError || !imageUrl || downloadError
+  // Mostra fallback se: houver erro, não houver URL, ou se for storage e ainda estiver carregando
+  const shouldShowFallback = imageError || !imageUrl || (storageId && isLoading)
 
   return (
     <Avatar className={className}>
-      {!shouldShowFallback && (
+      {!shouldShowFallback && imageUrl && (
         <AvatarImage 
           src={imageUrl} 
           alt={alt}

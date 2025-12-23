@@ -25,7 +25,7 @@ export class MessagesService {
     private whatsappService: WhatsappService,
     private auditService: AuditService,
     private eventsGateway: EventsGateway,
-  ) { }
+  ) {}
 
   async create(
     createMessageDto: CreateMessageDto,
@@ -284,7 +284,12 @@ export class MessagesService {
         include: {
           senderUser: { select: { id: true, name: true, avatarUrl: true } },
           senderContact: {
-            select: { id: true, name: true, profilePicUrl: true, phoneNumber: true },
+            select: {
+              id: true,
+              name: true,
+              profilePicUrl: true,
+              phoneNumber: true,
+            },
           },
           media: true,
           quotedMessage: {
@@ -474,7 +479,9 @@ export class MessagesService {
       },
     });
 
-    console.log(`[MessagesService] Marked ${result.count} messages as read for conversation ${conversationId}`);
+    console.log(
+      `[MessagesService] Marked ${result.count} messages as read for conversation ${conversationId}`,
+    );
 
     // Emitir evento de atualização para o frontend
     this.eventsGateway.emitToTenant(tenantId, 'messages-read', {

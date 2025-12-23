@@ -28,7 +28,7 @@ import { SubscriptionGuard } from '../subscriptions/guards/subscription.guard';
 @ApiBearerAuth()
 @Controller('teams')
 export class TeamsController {
-  constructor(private readonly teamsService: TeamsService) { }
+  constructor(private readonly teamsService: TeamsService) {}
 
   @Post()
   @UseGuards(SubscriptionGuard)

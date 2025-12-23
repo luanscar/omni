@@ -5,7 +5,7 @@ import type { AuditLog, AuditLogsParams, AuditStats } from './types'
 
 export function useAuditLogs(params?: AuditLogsParams) {
   return useQuery({
-    queryKey: queryKeys.audit.logs(params),
+    queryKey: queryKeys.audit.logs(params as Record<string, unknown> | undefined),
     queryFn: () => {
       const searchParams = new URLSearchParams()
       if (params?.eventType) searchParams.append('eventType', params.eventType)

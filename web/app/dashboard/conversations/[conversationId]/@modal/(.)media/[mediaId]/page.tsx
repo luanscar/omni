@@ -15,7 +15,7 @@ export default async function MediaModal({
     <Modal>
       <MediaViewer 
         mediaId={mediaId} 
-        type={type as any} 
+        type={type as 'image' | 'video' | 'audio' | undefined} 
         mimeType={mimeType} 
       />
     </Modal>

@@ -17,4 +17,4 @@ export const PLAN_LIMIT_KEY = 'plan_limit';
  * ```
  */
 export const CheckPlanLimit = (resource: PlanLimitResource) =>
-    SetMetadata(PLAN_LIMIT_KEY, resource);
+  SetMetadata(PLAN_LIMIT_KEY, resource);

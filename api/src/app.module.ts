@@ -19,7 +19,6 @@ import { AuditModule } from './modules/audit/audit.module';
 import { PlansModule } from './modules/plans/plans.module';
 import { SubscriptionsModule } from './modules/subscriptions/subscriptions.module';
 
-
 @Module({
   imports: [
     BullModule.forRoot({
@@ -56,4 +55,4 @@ import { SubscriptionsModule } from './modules/subscriptions/subscriptions.modul
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}

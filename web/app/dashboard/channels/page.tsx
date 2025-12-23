@@ -66,7 +66,7 @@ export default function ChannelsPage() {
   const queryClient = useQueryClient()
 
   // Escutar eventos de novas mensagens via socket.io
-  useSocketEvent('new-message', (message: any) => {
+  useSocketEvent<{ conversationId?: string }>('new-message', (message) => {
     console.log('Nova mensagem recebida via socket.io:', message)
     // Invalidar queries relacionadas para atualizar a UI
     if (message.conversationId) {

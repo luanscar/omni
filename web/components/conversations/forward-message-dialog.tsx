@@ -31,16 +31,16 @@ export function ForwardMessageDialog({
 }: ForwardMessageDialogProps) {
   const [search, setSearch] = useState('')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const { data: conversations, isLoading } = useConversations({ 
-      status: ConversationStatus.OPEN, // Only show open conversations? Or all? Let's show OPEN for now
-      search 
+  const { data: conversations, isLoading } = useConversations({
+    status: ConversationStatus.OPEN, // Only show open conversations? Or all? Let's show OPEN for now
+    search
   })
-  
+
   const { mutate: forwardMessage, isPending } = useForwardMessage()
 
   const handleToggle = (id: string) => {
-    setSelectedIds(prev => 
-      prev.includes(id) 
+    setSelectedIds(prev =>
+      prev.includes(id)
         ? prev.filter(item => item !== id)
         : [...prev, id]
     )
@@ -96,22 +96,19 @@ export function ForwardMessageDialog({
                     className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent cursor-pointer"
                     onClick={() => handleToggle(conversation.id)}
                   >
-                    <Checkbox 
+                    <Checkbox
                       checked={selectedIds.includes(conversation.id)}
                       onCheckedChange={() => handleToggle(conversation.id)}
                     />
-                    
+
                     <Avatar className="h-10 w-10">
                       <AvatarImage src={conversation.contact?.profilePicUrl || ''} />
                       <AvatarFallback>{conversation.contact?.name?.slice(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
-                    
+
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">
                         {conversation.contact?.name || conversation.remoteJid}
-                      </div>
-                      <div className="text-xs text-muted-foreground truncate">
-                        {conversation.channel?.name}
                       </div>
                     </div>
                   </div>
@@ -125,8 +122,8 @@ export function ForwardMessageDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
             Cancelar
           </Button>
-          <Button 
-            onClick={handleForward} 
+          <Button
+            onClick={handleForward}
             disabled={selectedIds.length === 0 || isPending}
             className="gap-2"
           >

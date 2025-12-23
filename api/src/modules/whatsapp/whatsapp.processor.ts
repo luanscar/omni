@@ -29,7 +29,7 @@ export class WhatsappProcessor {
     private storageService: StorageService,
     private eventsGateway: EventsGateway,
     private auditService: AuditService,
-  ) { }
+  ) {}
 
   @Process('process-message')
   async handleIncomingMessage(job: Job<any>) {
@@ -45,8 +45,12 @@ export class WhatsappProcessor {
 
     // Identificar o remetente real (Participant se for grupo, RemoteJid se for privado)
     // Em alguns casos de grupos antigos/migrados, participant pode ser nulo, fallback para remoteJid
-    const participantJid = isGroup ? (message.key.participant || remoteJid) : remoteJid;
-    const senderPushName = message.pushName || (isGroup ? 'Participante Desconhecido' : 'Desconhecido');
+    const participantJid = isGroup
+      ? message.key.participant || remoteJid
+      : remoteJid;
+    const senderPushName =
+      message.pushName ||
+      (isGroup ? 'Participante Desconhecido' : 'Desconhecido');
 
     this.logger.debug(
       `Processing message type: ${getContentType(message.message)} from ${remoteJid} | participant: ${participantJid} | fromMe: ${isFromMe}`,
@@ -126,10 +130,8 @@ export class WhatsappProcessor {
     }
 
     try {
-      const { content, mediaId, metadata, type } = await this.extractMessageContent(
-        message,
-        tenantId,
-      );
+      const { content, mediaId, metadata, type } =
+        await this.extractMessageContent(message, tenantId);
 
       if (!content && !mediaId) {
         this.logger.warn(
@@ -156,12 +158,15 @@ export class WhatsappProcessor {
             const socket = this.whatsappService.getSocket(channelId);
             if (socket) {
               const groupMetadata = await socket.groupMetadata(remoteJid);
-              conversationContactName = groupMetadata.subject || `Grupo ${remoteJid.slice(0, 4)}`;
+              conversationContactName =
+                groupMetadata.subject || `Grupo ${remoteJid.slice(0, 4)}`;
             } else {
               conversationContactName = `Grupo ${remoteJid.slice(0, 4)}...`;
             }
           } catch (err) {
-            this.logger.warn(`Failed to fetch group metadata for ${remoteJid}: ${err.message}`);
+            this.logger.warn(
+              `Failed to fetch group metadata for ${remoteJid}: ${err.message}`,
+            );
             conversationContactName = `Grupo ${remoteJid.slice(0, 4)}...`;
           }
         }
@@ -192,7 +197,7 @@ export class WhatsappProcessor {
           participantJid,
           senderPushName,
           channelId,
-          false
+          false,
         );
       } else {
         // Se conversa privada, o remetente é o próprio contato da conversa
@@ -319,7 +324,8 @@ export class WhatsappProcessor {
     type: any; // MessageType
   }> {
     const msg = message.message;
-    if (!msg) return { content: null, mediaId: null, metadata: null, type: 'TEXT' };
+    if (!msg)
+      return { content: null, mediaId: null, metadata: null, type: 'TEXT' };
 
     const type = getContentType(msg);
     let content: string | null = null;

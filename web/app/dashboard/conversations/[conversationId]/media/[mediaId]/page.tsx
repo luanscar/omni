@@ -15,7 +15,7 @@ export default async function MediaPage({
       <MediaViewer
         mediaId={mediaId}
         isFullPage
-        type={type as any}
+        type={type as 'image' | 'video' | 'audio' | undefined}
         mimeType={mimeType}
       />
     </div>

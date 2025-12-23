@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Mic, Smile, Trash2, Check, X, Loader2, FileText, Signature, Image as ImageIcon, Camera, Headphones, User2, BarChart3, Calendar, PlusCircle } from 'lucide-react'
+import { Send, Paperclip, Mic, Smile, Trash2, Check, X, Loader2, FileText, Signature, Image as ImageIcon, Camera, Headphones, User2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { useCreateMessage } from '@/lib/api/modules/messages'
@@ -24,6 +24,7 @@ import { cn } from '@/lib/utils'
 import { Message } from '@/lib/api/modules/messages/types'
 import { ContactSelectorDialog } from './contact-selector-dialog'
 import { Contact } from '@/lib/api/modules/contacts/types'
+import Image from 'next/image'
 
 interface MessageInputProps {
   conversationId: string
@@ -412,7 +413,7 @@ END:VCARD`
           {/* Main Preview */}
           <div className="flex-1 flex items-center justify-center p-4 min-h-0">
             {pendingFiles[previewIndex]?.file.type.startsWith('image/') ? (
-              <img
+              <Image
                 src={URL.createObjectURL(pendingFiles[previewIndex].file)}
                 className="max-h-full max-w-full object-contain"
                 alt="Preview"
@@ -488,7 +489,7 @@ END:VCARD`
                   onClick={() => setPreviewIndex(i)}
                 >
                   {item.file.type.startsWith('image/') ? (
-                    <img src={URL.createObjectURL(item.file)} className="w-full h-full object-cover" />
+                    <Image src={URL.createObjectURL(item.file)} className="w-full h-full object-cover" alt="" />
                   ) : (
                     <div className="w-full h-full bg-muted flex items-center justify-center">
                       <FileText className="h-6 w-6 text-muted-foreground" />

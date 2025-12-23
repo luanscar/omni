@@ -38,7 +38,7 @@ export function SubscriptionBanner() {
         hasSubscription: !!subscription,
         subscriptionStatus: subscription?.status,
         dismissed,
-        error: error?.message,
+        error: error && typeof error === 'object' && 'message' in error ? (error as { message?: string }).message : undefined,
       })
     }
   }, [isLoading, subscription, dismissed, error])

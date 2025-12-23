@@ -46,8 +46,7 @@ export class WhatsappService implements OnModuleInit {
     private storageService: StorageService,
     @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
-  ) { }
-
+  ) {}
 
   async onModuleInit() {
     await this.reconnectSavedSessions();
@@ -237,7 +236,11 @@ export class WhatsappService implements OnModuleInit {
 
         // Emitir evento de QR Code gerado
         if (tenantId) {
-          this.eventsGateway.emitWhatsappQrCode(tenantId, channelId, qrCodeDataURL);
+          this.eventsGateway.emitWhatsappQrCode(
+            tenantId,
+            channelId,
+            qrCodeDataURL,
+          );
         }
       }
 
@@ -246,7 +249,9 @@ export class WhatsappService implements OnModuleInit {
           (lastDisconnect?.error as any)?.output?.statusCode !==
           DisconnectReason.loggedOut;
 
-        const disconnectReason = shouldReconnect ? 'connection_lost' : 'logged_out';
+        const disconnectReason = shouldReconnect
+          ? 'connection_lost'
+          : 'logged_out';
 
         this.cleanUpSession(channelId);
 
@@ -261,7 +266,11 @@ export class WhatsappService implements OnModuleInit {
 
           // Emitir evento de desconexão
           if (tenantId) {
-            this.eventsGateway.emitWhatsappDisconnected(tenantId, channelId, disconnectReason);
+            this.eventsGateway.emitWhatsappDisconnected(
+              tenantId,
+              channelId,
+              disconnectReason,
+            );
           }
 
           await this.prisma.channel.update({
@@ -343,7 +352,11 @@ export class WhatsappService implements OnModuleInit {
 
       // Emitir evento de logout/desconexão
       if (tenantId) {
-        this.eventsGateway.emitWhatsappDisconnected(tenantId, channelId, 'manual_logout');
+        this.eventsGateway.emitWhatsappDisconnected(
+          tenantId,
+          channelId,
+          'manual_logout',
+        );
       }
 
       return { status: 'LOGGED_OUT' };

@@ -28,7 +28,7 @@ import { CheckPlanLimit } from '../subscriptions/decorators/check-plan-limit.dec
 @UseGuards(SubscriptionGuard, PlanLimitGuard)
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @CheckPlanLimit('users')
@@ -42,7 +42,7 @@ export class UsersController {
   @ApiResponse({ status: 401, description: 'Não autorizado.' })
   @ApiResponse({
     status: 403,
-    description: 'Proibido ou limite de usuários do plano atingido.'
+    description: 'Proibido ou limite de usuários do plano atingido.',
   })
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersService.create(createUserDto);
