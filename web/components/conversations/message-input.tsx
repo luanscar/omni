@@ -30,9 +30,10 @@ interface MessageInputProps {
   conversationId: string
   replyTo?: Message | null
   onCancelReply?: () => void
+  disabled?: boolean
 }
 
-export function MessageInput({ conversationId, replyTo, onCancelReply }: MessageInputProps) {
+export function MessageInput({ conversationId, replyTo, onCancelReply, disabled = false }: MessageInputProps) {
   const [content, setContent] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -104,7 +105,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   }, [content])
 
   const handleSend = () => {
-    if (!content.trim()) return
+    if (!content.trim() || disabled) return
 
     sendMessage({
       conversationId,
@@ -122,6 +123,7 @@ export function MessageInput({ conversationId, replyTo, onCancelReply }: Message
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -284,7 +286,7 @@ END:VCARD`
           <div className="flex gap-1 pb-1">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full" disabled={isUploading || isPending}>
+                <Button variant="ghost" size="icon" className="h-10 w-10 text-muted-foreground hover:bg-black/5 dark:hover:bg-white/5 rounded-full" disabled={disabled || isUploading || isPending}>
                   <Paperclip className="h-5 w-5" />
                 </Button>
               </DropdownMenuTrigger>
@@ -347,6 +349,7 @@ END:VCARD`
               )}
               onClick={() => setSignMessage(!signMessage)}
               title={signMessage ? "Assinatura ativada" : "Assinatura desativada"}
+              disabled={disabled}
             >
               <Signature className="h-5 w-5" />
             </Button>
@@ -359,10 +362,10 @@ END:VCARD`
               value={content}
               onChange={(e) => setContent(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Digite uma mensagem"
+              placeholder={disabled ? "Inicie o atendimento para enviar mensagens" : "Digite uma mensagem"}
               className="min-h-[40px] max-h-[150px] w-full resize-none border-0 focus-visible:ring-0 py-2 px-1 bg-transparent text-[15px] leading-normal"
               rows={1}
-              disabled={isUploading || isPending}
+              disabled={disabled || isUploading || isPending}
             />
           </div>
 
@@ -373,7 +376,7 @@ END:VCARD`
                 size="icon"
                 className="h-10 w-10 rounded-full transition-all duration-200 bg-primary hover:bg-primary/90"
                 onClick={handleSend}
-                disabled={isPending || isUploading}
+                disabled={disabled || isPending || isUploading}
               >
                 <Send className="h-5 w-5 ml-0.5" />
               </Button>
@@ -383,7 +386,7 @@ END:VCARD`
                 variant="ghost"
                 className="h-10 w-10 text-muted-foreground rounded-full hover:bg-black/5 dark:hover:bg-white/5"
                 onClick={startRecording}
-                disabled={isPending || isUploading}
+                disabled={disabled || isPending || isUploading}
               >
                 <Mic className="h-5 w-5" />
               </Button>

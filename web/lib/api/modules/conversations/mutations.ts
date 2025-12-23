@@ -6,6 +6,7 @@ import type {
   UpdateConversationDto,
   Conversation,
 } from './types'
+import { ConversationStatus } from '@/lib/api/types'
 
 export function useCreateConversation() {
   const queryClient = useQueryClient()
@@ -38,6 +39,33 @@ export function useUpdateConversation() {
       })
       queryClient.invalidateQueries({
         queryKey: queryKeys.conversations.detail(variables.id),
+      })
+    },
+  })
+}
+
+export function useStartConversation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: ({
+      conversationId,
+      assigneeId,
+    }: {
+      conversationId: string
+      assigneeId: string
+    }) => {
+      return apiClient.patch<Conversation>(`/conversations/${conversationId}`, {
+        status: ConversationStatus.OPEN,
+        assigneeId,
+      })
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.conversations.all(),
+      })
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.conversations.detail(variables.conversationId),
       })
     },
   })

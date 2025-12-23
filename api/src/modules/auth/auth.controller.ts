@@ -1,6 +1,7 @@
 import {
   Controller,
   Post,
+  Get,
   Body,
   HttpCode,
   HttpStatus,
@@ -18,6 +19,7 @@ import {
 import { AuditService } from '../audit/audit.service';
 import { AuditStatus, AuditEventType } from 'prisma/generated/enums';
 import { FastifyRequest } from 'fastify';
+import { CurrentUser } from 'src/common/decorators/current-user.decorator';
 
 @ApiTags('Auth')
 @ApiBearerAuth()
@@ -68,5 +70,30 @@ export class AuthController {
 
       throw error;
     }
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Obter informações do usuário atual' })
+  @ApiResponse({
+    status: 200,
+    description: 'Informações do usuário atual retornadas com sucesso.',
+  })
+  @ApiResponse({ status: 401, description: 'Não autorizado.' })
+  async getMe(@CurrentUser() user: any) {
+    // Retornar apenas os campos necessários, excluindo a senha
+    // O user já vem do JwtStrategy que busca do banco via validateUserById
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password, ...userWithoutPassword } = user;
+    return {
+      id: userWithoutPassword.id,
+      name: userWithoutPassword.name,
+      email: userWithoutPassword.email,
+      active: userWithoutPassword.active,
+      avatarUrl: userWithoutPassword.avatarUrl,
+      role: userWithoutPassword.role,
+      tenantId: userWithoutPassword.tenantId,
+      createdAt: userWithoutPassword.createdAt,
+      updatedAt: userWithoutPassword.updatedAt,
+    };
   }
 }

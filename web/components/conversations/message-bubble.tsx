@@ -280,7 +280,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
         >
           {/* Nome do Remetente (Apenas Recebidas e não-mídia pura) */}
           {!isSent && !isImageOrVideo && (
-            <div className="px-3 pt-2 text-[12px] font-bold opacity-90 text-accent truncate">
+            <div className="px-3 pt-2 pr-10 text-[12px] font-bold text-primary truncate">
               {message.senderContact?.name || message.senderContact?.phoneNumber}
             </div>
           )}
@@ -312,7 +312,7 @@ export function MessageBubble({ message, onReply }: MessageBubbleProps) {
             !isSent && isImageOrVideo && "pt-0"
           )}>
             {!isSent && isImageOrVideo && !message.quotedMessage && (
-              <div className="py-1 text-[12px] font-bold opacity-90 text-accent truncate">
+              <div className="py-1 pr-10 text-[12px] font-bold text-primary truncate">
                 {message.senderContact?.name || message.senderContact?.phoneNumber}
               </div>
             )}

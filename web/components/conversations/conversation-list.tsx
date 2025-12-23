@@ -22,8 +22,15 @@ import {
   Phone,
   Image as ImageIcon,
   FileText,
-  CheckCheck
+  CheckCheck,
+  ChevronDown
 } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 type FilterTab = 'all' | 'unread' | 'groups'
 
@@ -224,95 +231,116 @@ export function ConversationList() {
               }[conversation.status] || conversation.status
 
               return (
-                <button
+                <div
                   key={conversation.id}
-                  onClick={() => handleSelect(conversation.id)}
                   className={cn(
-                    "flex items-center gap-3 px-4 py-3 text-left transition-all border-b relative",
+                    "flex items-center gap-3 px-4 py-3 transition-all border-b relative group",
                     "hover:bg-accent/50",
                     isActive && "bg-accent before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1 before:bg-primary"
                   )}
                 >
-                  {/* Avatar com indicador de status e tooltip */}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="relative">
-                          <AvatarImageWithStorage
-                            src={contact?.profilePicUrl}
-                            alt={contact?.name || 'Contato'}
-                            fallback={contact?.name?.slice(0, 2).toUpperCase() || 'C'}
-                            className={cn(
-                              "h-12 w-12 flex-shrink-0 transition-all cursor-help",
-                              conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
-                              conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
-                              conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
-                            )}
-                          />
-
-                          {/* Mini avatar do agente atribuído */}
-                          {conversation.assignee && (
+                  <button
+                    onClick={() => handleSelect(conversation.id)}
+                    className="flex items-center gap-3 flex-1 text-left min-w-0"
+                  >
+                    {/* Avatar com indicador de status e tooltip */}
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
                             <AvatarImageWithStorage
-                              src={conversation.assignee.avatarUrl}
-                              alt={conversation.assignee.name || 'Agente'}
-                              fallback={conversation.assignee.name?.slice(0, 2).toUpperCase() || 'A'}
-                              className="absolute -bottom-1 -right-1 h-7 w-7 border-2 border-background shadow-md"
+                              src={contact?.profilePicUrl}
+                              alt={contact?.name || 'Contato'}
+                              fallback={contact?.name?.slice(0, 2).toUpperCase() || 'C'}
+                              className={cn(
+                                "h-12 w-12 flex-shrink-0 transition-all cursor-help",
+                                conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
+                                conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
+                                conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
+                              )}
                             />
+
+                            {/* Mini avatar do agente atribuído */}
+                            {conversation.assignee && (
+                              <AvatarImageWithStorage
+                                src={conversation.assignee.avatarUrl}
+                                alt={conversation.assignee.name || 'Agente'}
+                                fallback={conversation.assignee.name?.slice(0, 2).toUpperCase() || 'A'}
+                                className="absolute -bottom-1 -right-1 h-7 w-7 border-2 border-background shadow-md"
+                              />
+                            )}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <p>Status: {statusLabel}</p>
+                          {conversation.assignee && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Atribuído: {conversation.assignee.name}
+                            </p>
                           )}
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent side="right">
-                        <p>Status: {statusLabel}</p>
-                        {conversation.assignee && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Atribuído: {conversation.assignee.name}
-                          </p>
-                        )}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
 
-                  {/* Conteúdo da conversa */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className={cn(
-                        "font-medium text-sm truncate",
-                        hasUnread && "font-semibold"
-                      )}>
-                        {contact?.name || conversation.remoteJid}
-                      </h3>
-                      <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                        {conversation.updatedAt && formatTime(new Date(conversation.updatedAt))}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2">
-                      <div className={cn(
-                        "flex items-center gap-1.5 text-xs truncate",
-                        hasUnread ? "text-foreground font-medium" : "text-muted-foreground"
-                      )}>
-                        {typeof messagePreview === 'object' && messagePreview.icon && (
-                          <span className="flex-shrink-0">{messagePreview.icon}</span>
-                        )}
-                        {/* ConversationMessage não tem fromMe/status, apenas senderType */}
-                        {lastMessage?.senderType === 'USER' && (
-                          <span className="flex-shrink-0">
-                            <CheckCheck className="h-3 w-3 text-primary" />
-                          </span>
-                        )}
-                        <span className="truncate">
-                          {typeof messagePreview === 'object' ? messagePreview.text : messagePreview}
+                    {/* Conteúdo da conversa */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={cn(
+                          "font-medium text-sm truncate",
+                          hasUnread && "font-semibold"
+                        )}>
+                          {contact?.name || conversation.remoteJid}
+                        </h3>
+                        <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
+                          {conversation.updatedAt && formatTime(new Date(conversation.updatedAt))}
                         </span>
                       </div>
 
-                      {hasUnread && (
-                        <Badge className="bg-primary text-primary-foreground h-5 min-w-5 px-1.5 text-[11px] font-medium flex-shrink-0">
-                          {conversation.unreadCount}
-                        </Badge>
-                      )}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className={cn(
+                          "flex items-center gap-1.5 text-xs truncate",
+                          hasUnread ? "text-foreground font-medium" : "text-muted-foreground"
+                        )}>
+                          {typeof messagePreview === 'object' && messagePreview.icon && (
+                            <span className="flex-shrink-0">{messagePreview.icon}</span>
+                          )}
+                          {/* ConversationMessage não tem fromMe/status, apenas senderType */}
+                          {lastMessage?.senderType === 'USER' && (
+                            <span className="flex-shrink-0">
+                              <CheckCheck className="h-3 w-3 text-primary" />
+                            </span>
+                          )}
+                          <span className="truncate">
+                            {typeof messagePreview === 'object' ? messagePreview.text : messagePreview}
+                          </span>
+                        </div>
+
+                        {hasUnread && (
+                          <Badge className="bg-primary text-primary-foreground h-5 min-w-5 px-1.5 text-[11px] font-medium flex-shrink-0">
+                            {conversation.unreadCount}
+                          </Badge>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </button>
+                  </button>
+
+                  {/* Dropdown Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-accent rounded"
+                      >
+                        <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                        Arquivar conversa
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               )
             })
           })()}

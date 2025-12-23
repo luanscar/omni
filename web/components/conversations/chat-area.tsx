@@ -1,6 +1,6 @@
 'use client'
 
-import { useConversation, useMarkMessagesAsRead } from '@/lib/api/modules/conversations'
+import { useConversation, useMarkMessagesAsRead, useStartConversation, useUpdateConversation } from '@/lib/api/modules/conversations'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Button } from '@/components/ui/button'
@@ -19,13 +19,36 @@ import { useState, useEffect } from 'react'
 import { Message } from '@/lib/api/modules/messages/types'
 import { useSocketEvent } from '@/hooks/use-socket'
 import { cn } from '@/lib/utils'
-import { Search, MoreVertical, UserPlus, X, Archive, Trash2 } from 'lucide-react'
+import { Search, MoreVertical, UserPlus, X, Archive, Trash2, Play, Pause, Check } from 'lucide-react'
+import { ConversationStatus } from '@/lib/api/types'
+import { useMe } from '@/lib/api/modules/auth'
 
 export function ChatArea({ conversationId }: { conversationId: string }) {
   const { data: conversation, isLoading } = useConversation(conversationId)
   const { mutate: markAsRead } = useMarkMessagesAsRead()
+  const { mutate: startConversation, isPending: isStarting } = useStartConversation()
+  const { mutate: updateConversation, isPending: isUpdatingStatus } = useUpdateConversation()
+  const { data: currentUser } = useMe()
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+
+  const handleStartConversation = () => {
+    if (!currentUser?.id) {
+      console.error('User ID not found')
+      return
+    }
+    startConversation({
+      conversationId,
+      assigneeId: currentUser.id,
+    })
+  }
+
+  const handleStatusChange = (newStatus: ConversationStatus) => {
+    updateConversation({
+      id: conversationId,
+      data: { status: newStatus },
+    })
+  }
 
   // Marcar mensagens como lidas quando a conversa é aberta
   useEffect(() => {
@@ -121,24 +144,114 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
 
         {/* Botões de ação */}
         <div className="flex items-center gap-1">
+          {/* Botão Iniciar Atendimento (apenas quando PENDING) */}
+          {conversation.status === ConversationStatus.PENDING && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    onClick={handleStartConversation}
+                    disabled={isStarting}
+                  >
+                    <Play className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Iniciar atendimento</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Botão Pausar (mudar de OPEN para PENDING) */}
+          {conversation.status === ConversationStatus.OPEN && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleStatusChange(ConversationStatus.PENDING)}
+                    disabled={isUpdatingStatus}
+                  >
+                    <Pause className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Pausar conversa</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Botão Fechar (mudar para CLOSED) */}
+          {conversation.status !== ConversationStatus.CLOSED && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleStatusChange(ConversationStatus.CLOSED)}
+                    disabled={isUpdatingStatus}
+                  >
+                    <Check className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Fechar conversa</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
+          {/* Botão Reabrir (mudar de CLOSED para OPEN) */}
+          {conversation.status === ConversationStatus.CLOSED && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleStatusChange(ConversationStatus.OPEN)}
+                    disabled={isUpdatingStatus}
+                  >
+                    <Play className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Reabrir conversa</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+
           {/* Botão Atribuir Agente */}
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 text-muted-foreground hover:text-foreground"
-                  onClick={() => setAssignDialogOpen(true)}
-                >
-                  <UserPlus className="h-5 w-5" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Atribuir agente</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {conversation.status !== ConversationStatus.PENDING && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 text-muted-foreground hover:text-foreground"
+                    onClick={() => setAssignDialogOpen(true)}
+                  >
+                    <UserPlus className="h-5 w-5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Atribuir agente</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
 
           {/* Botão Buscar */}
           <TooltipProvider>
@@ -191,6 +304,7 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
         conversationId={conversationId}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
+        disabled={conversation.status === ConversationStatus.PENDING || conversation.status === ConversationStatus.CLOSED}
       />
 
       {/* Dialog de atribuição de agente */}

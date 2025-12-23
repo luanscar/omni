@@ -8,7 +8,7 @@ export interface CreateConversationDto {
 
 export interface UpdateConversationDto {
   status?: ConversationStatus
-  assigneeId?: string
+  assigneeId?: string | null
 }
 
 export interface ConversationContact {

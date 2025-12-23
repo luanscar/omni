@@ -13,3 +13,15 @@ export interface LoginResponse {
   }
 }
 
+export interface User {
+  id: string
+  name: string
+  email: string
+  active: boolean
+  avatarUrl?: string
+  role: string
+  tenantId: string
+  createdAt: string
+  updatedAt: string
+}
+
