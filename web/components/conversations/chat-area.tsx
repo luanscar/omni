@@ -23,6 +23,7 @@ import { Search, MoreVertical, UserPlus, X, Archive, Trash2, Play, Pause, Check 
 import { ConversationStatus } from '@/lib/api/types'
 import { useMe } from '@/lib/api/modules/auth'
 import { useMyTenant } from '@/lib/api/modules/tenants'
+import { useNotificationSoundStore } from '@/lib/store/notification-sound'
 
 export function ChatArea({ conversationId }: { conversationId: string }) {
   const { data: conversation, isLoading } = useConversation(conversationId)
@@ -31,6 +32,7 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
   const { mutate: updateConversation, isPending: isUpdatingStatus } = useUpdateConversation()
   const { data: currentUser } = useMe()
   const { data: tenant } = useMyTenant()
+  const setActiveConversationId = useNotificationSoundStore((state) => state.setActiveConversationId)
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
 
@@ -56,14 +58,17 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
     })
   }
 
-  // Marcar mensagens como lidas quando a conversa é aberta
+  // Marcar mensagens como lidas quando a conversa é aberta e atualizar conversa ativa na store
   useEffect(() => {
     if (conversationId) {
       console.log('[ChatArea] Attempting to mark messages as read for:', conversationId)
       markAsRead(conversationId)
+      setActiveConversationId(conversationId)
+    } else {
+      setActiveConversationId(null)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId]) // Removido markAsRead para evitar loops
+  }, [conversationId]) // Removido markAsRead e setActiveConversationId para evitar loops
 
   // Marcar automaticamente como lida quando chegar nova mensagem com o chat aberto
   useSocketEvent<{ conversationId?: string }>('new-message', (message) => {

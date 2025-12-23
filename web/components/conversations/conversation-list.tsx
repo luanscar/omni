@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useConversations } from '@/lib/api/modules/conversations'
 import type { ConversationMessage } from '@/lib/api/modules/conversations/types'
-import type { Message } from '@/lib/api/modules/messages/types'
 import { useMyTenant } from '@/lib/api/modules/tenants'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -12,11 +11,8 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 import { format, isToday, isYesterday } from 'date-fns'
-import { useQueryClient } from '@tanstack/react-query'
-import { useSocketEvent } from '@/hooks/use-socket'
-import { useNotificationSound } from '@/hooks/use-notification-sound'
 import React from 'react'
-import { queryKeys } from '@/lib/query/keys'
+import { useUnreadMessagesStore } from '@/lib/store/unread-messages'
 import {
   Search,
   Video,
@@ -54,28 +50,12 @@ export function ConversationList() {
     search: search || undefined,
   })
 
-  const queryClient = useQueryClient()
-  const { playSound } = useNotificationSound()
-
-  // Atualizar lista quando chegar nova mensagem
-  useSocketEvent('new-message', (data: unknown) => {
-    const message = data as Message
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.conversations.all()
-    })
-
-    // Tocar som apenas se a mensagem não for da conversa atualmente aberta
-    if (message?.conversationId !== activeId) {
-      playSound()
+  // Atualizar store quando conversas mudarem
+  React.useEffect(() => {
+    if (conversations) {
+      useUnreadMessagesStore.getState().setConversations(conversations)
     }
-  })
-
-  // Atualizar lista quando mensagens forem marcadas como lidas
-  useSocketEvent('messages-read', () => {
-    queryClient.invalidateQueries({
-      queryKey: queryKeys.conversations.all()
-    })
-  })
+  }, [conversations])
 
   const handleSelect = (id: string) => {
     router.push(`/dashboard/conversations/${id}`)

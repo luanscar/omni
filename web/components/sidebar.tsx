@@ -25,6 +25,7 @@ import { removeToken } from '@/hooks/use-auth'
 import { SubscriptionBanner } from '@/components/subscription-banner'
 import { AvatarImageWithStorage } from '@/components/avatar-image'
 import { useMe } from '@/lib/api/modules/auth'
+import { useUnreadMessagesStore } from '@/lib/store/unread-messages'
 
 const SidebarContext = createContext<{
   isMobileOpen: boolean
@@ -53,7 +54,6 @@ const navItems: NavItem[] = [
     title: 'Conversas',
     href: '/dashboard/conversations',
     icon: MessageSquare,
-    badge: '12',
   },
   {
     title: 'Contatos',
@@ -100,6 +100,7 @@ export function Sidebar() {
   const router = useRouter()
   const [isMobileOpen, setIsMobileOpen] = useState(false)
   const { data: currentUser } = useMe()
+  const totalUnreadCount = useUnreadMessagesStore((state) => state.totalUnreadCount)
 
   const handleLogout = () => {
     removeToken()
@@ -125,6 +126,9 @@ export function Sidebar() {
   const DesktopNavLink = ({ item }: { item: NavItem }) => {
     const isActive = isItemActive(item.href, pathname)
     const Icon = item.icon
+    // Mostrar badge apenas para Conversas se houver mensagens não lidas
+    const showBadge = item.href === '/dashboard/conversations' && totalUnreadCount > 0
+    const badgeValue = item.href === '/dashboard/conversations' ? totalUnreadCount : item.badge
 
     return (
       <Tooltip delayDuration={0}>
@@ -142,9 +146,9 @@ export function Sidebar() {
             {/* Ícone com badge */}
             <div className="relative flex items-center justify-center">
               <Icon className="h-5 w-5" />
-              {item.badge && (
+              {showBadge && (
                 <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground shadow-sm border-2 border-sidebar">
-                  {item.badge}
+                  {badgeValue && Number(badgeValue) > 99 ? '99+' : badgeValue}
                 </span>
               )}
             </div>
@@ -161,6 +165,9 @@ export function Sidebar() {
   const MobileNavLink = ({ item }: { item: NavItem }) => {
     const isActive = isItemActive(item.href, pathname)
     const Icon = item.icon
+    // Mostrar badge apenas para Conversas se houver mensagens não lidas
+    const showBadge = item.href === '/dashboard/conversations' && totalUnreadCount > 0
+    const badgeValue = item.href === '/dashboard/conversations' ? totalUnreadCount : item.badge
 
     return (
       <Link
@@ -177,9 +184,9 @@ export function Sidebar() {
         {/* Ícone com badge */}
         <div className="relative flex-shrink-0 flex items-center justify-center">
           <Icon className="h-5 w-5" />
-          {item.badge && (
+          {showBadge && (
             <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-semibold text-primary-foreground shadow-sm border-2 border-sidebar">
-              {item.badge}
+              {badgeValue && Number(badgeValue) > 99 ? '99+' : badgeValue}
             </span>
           )}
         </div>

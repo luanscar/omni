@@ -20,6 +20,7 @@ interface MessageListProps {
 export function MessageList({ conversationId, onReply, disabled = false }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const queryClient = useQueryClient()
+  const shouldScrollRef = useRef(true) // Flag para controlar se deve scrollar
 
   // Real-time updates
   useSocketEvent<Message>('new-message', (newMessage) => {
@@ -27,6 +28,8 @@ export function MessageList({ conversationId, onReply, disabled = false }: Messa
       queryClient.invalidateQueries({
         queryKey: queryKeys.messages.byConversation(conversationId)
       })
+      // Quando chegar nova mensagem, deve scrollar
+      shouldScrollRef.current = true
     }
   })
 
@@ -59,13 +62,46 @@ export function MessageList({ conversationId, onReply, disabled = false }: Messa
     return [...allMessages].reverse()
   }, [data])
 
-  // Auto-scroll to bottom on initial load via useEffect (pode ser melhorado com layouts específicos de chat)
-  useEffect(() => {
-    if (!isLoading && messages.length > 0 && scrollRef.current) {
-      // Apenas scrolla se estivermos perto do fim ou na carga inicial (simplificado)
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+  // Função para scrollar até o final
+  const scrollToBottom = () => {
+    if (scrollRef.current) {
+      // Usar requestAnimationFrame para garantir que o DOM foi atualizado
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+        }
+      })
     }
-  }, [messages.length, isLoading])
+  }
+
+  // Scroll quando conversationId mudar (nova conversa aberta)
+  useEffect(() => {
+    shouldScrollRef.current = true
+  }, [conversationId])
+
+  // Auto-scroll to bottom quando carregar mensagens inicialmente ou quando chegar nova mensagem
+  useEffect(() => {
+    if (!isLoading && messages.length > 0 && shouldScrollRef.current) {
+      // Usar setTimeout para garantir que o DOM foi completamente renderizado
+      const timeoutId = setTimeout(() => {
+        scrollToBottom()
+        shouldScrollRef.current = false // Resetar flag após scrollar
+      }, 100)
+      
+      return () => clearTimeout(timeoutId)
+    }
+  }, [messages.length, isLoading, conversationId])
+
+  // Detectar quando usuário scrolla manualmente para não auto-scrolar
+  const handleScroll = () => {
+    if (!scrollRef.current) return
+    
+    const { scrollTop, scrollHeight, clientHeight } = scrollRef.current
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100 // 100px de tolerância
+    
+    // Se o usuário não está perto do final, não deve auto-scrolar
+    shouldScrollRef.current = isNearBottom
+  }
 
   if (isLoading) {
     return <div className="flex-1 flex items-center justify-center"><Loader2 className="animate-spin" /></div>
@@ -78,6 +114,7 @@ export function MessageList({ conversationId, onReply, disabled = false }: Messa
         disabled && "pointer-events-none opacity-50"
       )}
       ref={scrollRef}
+      onScroll={handleScroll}
     >
       <div className="max-w-6xl mx-auto space-y-4">
         {hasNextPage && (
