@@ -4,6 +4,7 @@ import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useConversations } from '@/lib/api/modules/conversations'
 import type { ConversationMessage } from '@/lib/api/modules/conversations/types'
 import type { Message } from '@/lib/api/modules/messages/types'
+import { useMyTenant } from '@/lib/api/modules/tenants'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { AvatarImageWithStorage } from '@/components/avatar-image'
@@ -38,6 +39,11 @@ export function ConversationList() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+  const { data: tenant } = useMyTenant()
+
+  // Determinar modo de chat (padrão: ATTENDANCE se não definido)
+  const chatMode = tenant?.settings?.chatMode || 'ATTENDANCE'
+  const isSimpleChat = chatMode === 'SIMPLE'
 
   const search = searchParams.get('q') || ''
   // Extrair conversationId do pathname: /dashboard/conversations/[id]
@@ -254,14 +260,15 @@ export function ConversationList() {
                               fallback={contact?.name?.slice(0, 2).toUpperCase() || 'C'}
                               className={cn(
                                 "h-12 w-12 flex-shrink-0 transition-all cursor-help",
-                                conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
-                                conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
-                                conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
+                                // Ring e shadow baseados no status da conversa (apenas modo ATTENDANCE)
+                                !isSimpleChat && conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
+                                !isSimpleChat && conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
+                                !isSimpleChat && conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
                               )}
                             />
 
-                            {/* Mini avatar do agente atribuído */}
-                            {conversation.assignee && (
+                            {/* Mini avatar do agente atribuído (apenas modo ATTENDANCE) */}
+                            {!isSimpleChat && conversation.assignee && (
                               <AvatarImageWithStorage
                                 src={conversation.assignee.avatarUrl}
                                 alt={conversation.assignee.name || 'Agente'}
@@ -272,8 +279,8 @@ export function ConversationList() {
                           </div>
                         </TooltipTrigger>
                         <TooltipContent side="right">
-                          <p>Status: {statusLabel}</p>
-                          {conversation.assignee && (
+                          {!isSimpleChat && <p>Status: {statusLabel}</p>}
+                          {!isSimpleChat && conversation.assignee && (
                             <p className="text-xs text-muted-foreground mt-1">
                               Atribuído: {conversation.assignee.name}
                             </p>

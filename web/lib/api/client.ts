@@ -37,16 +37,29 @@ api.interceptors.response.use(
   (error: AxiosError) => {
     // Log de erros para debug (apenas em desenvolvimento)
     if (process.env.NODE_ENV === 'development') {
-      console.error('API Error:', {
+      const errorInfo = {
         url: error.config?.url,
         method: error.config?.method,
         status: error.response?.status,
+        statusText: error.response?.statusText,
         message: error.message,
         code: error.code,
         response_data: error.response?.data,
-        // Adicionar informações completas se as propriedades estiverem vazias
-        fullError: !error.config && !error.response ? JSON.stringify(error, null, 2) : undefined,
-      })
+        request_data: error.config?.data,
+        headers: error.response?.headers,
+      }
+      
+      // Se o objeto estiver vazio, tentar serializar o erro completo
+      const hasData = Object.values(errorInfo).some(v => v !== undefined && v !== null)
+      if (!hasData) {
+        try {
+          console.error('API Error (Full):', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+        } catch {
+          console.error('API Error (Raw):', error)
+        }
+      } else {
+        console.error('API Error:', errorInfo)
+      }
     }
 
     if (error.response?.status === 401) {

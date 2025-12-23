@@ -2,6 +2,7 @@ import { ConflictException, Injectable } from '@nestjs/common';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import { PrismaService } from 'src/prisma.service';
+import { Prisma } from 'prisma/generated/client';
 
 @Injectable()
 export class TenantsService {
@@ -36,9 +37,15 @@ export class TenantsService {
   }
 
   update(id: string, data: UpdateTenantDto) {
+    const { settings, ...rest } = data;
     return this.prisma.tenant.update({
       where: { id },
-      data,
+      data: {
+        ...rest,
+        ...(settings !== undefined && {
+          settings: settings as Prisma.InputJsonValue,
+        }),
+      },
     });
   }
 

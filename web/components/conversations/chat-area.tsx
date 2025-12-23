@@ -22,6 +22,7 @@ import { cn } from '@/lib/utils'
 import { Search, MoreVertical, UserPlus, X, Archive, Trash2, Play, Pause, Check } from 'lucide-react'
 import { ConversationStatus } from '@/lib/api/types'
 import { useMe } from '@/lib/api/modules/auth'
+import { useMyTenant } from '@/lib/api/modules/tenants'
 
 export function ChatArea({ conversationId }: { conversationId: string }) {
   const { data: conversation, isLoading } = useConversation(conversationId)
@@ -29,8 +30,13 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
   const { mutate: startConversation, isPending: isStarting } = useStartConversation()
   const { mutate: updateConversation, isPending: isUpdatingStatus } = useUpdateConversation()
   const { data: currentUser } = useMe()
+  const { data: tenant } = useMyTenant()
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [assignDialogOpen, setAssignDialogOpen] = useState(false)
+
+  // Determinar modo de chat (padrão: ATTENDANCE se não definido)
+  const chatMode = tenant?.settings?.chatMode || 'ATTENDANCE'
+  const isSimpleChat = chatMode === 'SIMPLE'
 
   const handleStartConversation = () => {
     if (!currentUser?.id) {
@@ -111,15 +117,15 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
                     fallback={conversation.contact?.name?.slice(0, 2).toUpperCase() || 'C'}
                     className={cn(
                       "h-10 w-10 flex-shrink-0 transition-all cursor-help",
-                      // Ring e shadow baseados no status da conversa
-                      conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
-                      conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
-                      conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
+                      // Ring e shadow baseados no status da conversa (apenas modo ATTENDANCE)
+                      !isSimpleChat && conversation.status === 'PENDING' && "ring-2 ring-yellow-400 shadow-[0_0_12px_rgba(250,204,21,0.6)]",
+                      !isSimpleChat && conversation.status === 'OPEN' && "ring-2 ring-green-500 shadow-[0_0_12px_rgba(34,197,94,0.6)]",
+                      !isSimpleChat && conversation.status === 'CLOSED' && "ring-2 ring-red-500 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
                     )}
                   />
 
-                  {/* Mini avatar do agente atribuído */}
-                  {conversation.assignee && (
+                  {/* Mini avatar do agente atribuído (apenas modo ATTENDANCE) */}
+                  {!isSimpleChat && conversation.assignee && (
                     <AvatarImageWithStorage
                       src={conversation.assignee.avatarUrl}
                       alt={conversation.assignee.name || 'Agente'}
@@ -130,8 +136,8 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Status: {statusLabel}</p>
-                {conversation.assignee && (
+                {!isSimpleChat && <p>Status: {statusLabel}</p>}
+                {!isSimpleChat && conversation.assignee && (
                   <p className="text-xs text-muted-foreground mt-1">
                     Atribuído: {conversation.assignee.name}
                   </p>
@@ -144,8 +150,8 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
 
         {/* Botões de ação */}
         <div className="flex items-center gap-1">
-          {/* Botão Iniciar Atendimento (apenas quando PENDING) */}
-          {conversation.status === ConversationStatus.PENDING && (
+          {/* Botão Iniciar Atendimento (apenas quando PENDING e modo ATTENDANCE) */}
+          {!isSimpleChat && conversation.status === ConversationStatus.PENDING && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -166,8 +172,8 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
             </TooltipProvider>
           )}
 
-          {/* Botão Pausar (mudar de OPEN para PENDING) */}
-          {conversation.status === ConversationStatus.OPEN && (
+          {/* Botão Pausar (mudar de OPEN para PENDING) - apenas modo ATTENDANCE */}
+          {!isSimpleChat && conversation.status === ConversationStatus.OPEN && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -188,8 +194,8 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
             </TooltipProvider>
           )}
 
-          {/* Botão Fechar (mudar para CLOSED) */}
-          {conversation.status !== ConversationStatus.CLOSED && (
+          {/* Botão Fechar (mudar para CLOSED) - apenas modo ATTENDANCE */}
+          {!isSimpleChat && conversation.status !== ConversationStatus.CLOSED && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -210,8 +216,8 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
             </TooltipProvider>
           )}
 
-          {/* Botão Reabrir (mudar de CLOSED para OPEN) */}
-          {conversation.status === ConversationStatus.CLOSED && (
+          {/* Botão Reabrir (mudar de CLOSED para OPEN) - apenas modo ATTENDANCE */}
+          {!isSimpleChat && conversation.status === ConversationStatus.CLOSED && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -232,8 +238,8 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
             </TooltipProvider>
           )}
 
-          {/* Botão Atribuir Agente */}
-          {conversation.status !== ConversationStatus.PENDING && (
+          {/* Botão Atribuir Agente - apenas modo ATTENDANCE */}
+          {!isSimpleChat && conversation.status !== ConversationStatus.PENDING && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -297,7 +303,11 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
       <MessageList
         conversationId={conversationId}
         onReply={(msg) => setReplyTo(msg)}
-        disabled={conversation.status === ConversationStatus.PENDING || conversation.status === ConversationStatus.CLOSED}
+        disabled={
+          isSimpleChat
+            ? false
+            : conversation.status === ConversationStatus.PENDING || conversation.status === ConversationStatus.CLOSED
+        }
       />
 
       {/* Input */}
@@ -305,16 +315,22 @@ export function ChatArea({ conversationId }: { conversationId: string }) {
         conversationId={conversationId}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
-        disabled={conversation.status === ConversationStatus.PENDING || conversation.status === ConversationStatus.CLOSED}
+        disabled={
+          isSimpleChat
+            ? false
+            : conversation.status === ConversationStatus.PENDING || conversation.status === ConversationStatus.CLOSED
+        }
       />
 
-      {/* Dialog de atribuição de agente */}
-      <AssignAgentDialog
-        open={assignDialogOpen}
-        onOpenChange={setAssignDialogOpen}
-        conversationId={conversationId}
-        currentAssigneeId={conversation?.assigneeId}
-      />
+      {/* Dialog de atribuição de agente - apenas modo ATTENDANCE */}
+      {!isSimpleChat && (
+        <AssignAgentDialog
+          open={assignDialogOpen}
+          onOpenChange={setAssignDialogOpen}
+          conversationId={conversationId}
+          currentAssigneeId={conversation?.assigneeId}
+        />
+      )}
     </div>
   )
 }
