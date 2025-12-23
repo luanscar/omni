@@ -15,9 +15,9 @@ export default function SubscriptionSuccessPage() {
   const sessionId = searchParams.get('session_id')
   const confirmSession = useConfirmCheckoutSession()
   const queryClient = useQueryClient()
-  const { data: subscription, refetch } = useMySubscription()
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
-  const [errorMessage, setErrorMessage] = useState<string>('')
+  const { refetch } = useMySubscription()
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>(sessionId ? 'loading' : 'error')
+  const [errorMessage, setErrorMessage] = useState<string>(sessionId ? '' : 'ID da sessão não encontrado')
   const hasProcessed = useRef(false)
 
   useEffect(() => {
@@ -27,8 +27,7 @@ export default function SubscriptionSuccessPage() {
     }
 
     if (!sessionId) {
-      setStatus('error')
-      setErrorMessage('ID da sessão não encontrado')
+      // Já inicializamos com erro se não tiver session id, ou tratamos na renderização
       return
     }
 
@@ -40,18 +39,18 @@ export default function SubscriptionSuccessPage() {
         // Primeiro, tentar confirmar a sessão manualmente
         // Isso salvará a subscription no banco
         await confirmSession.mutateAsync(sessionId)
-        
+
         // Invalidar o cache da subscription para forçar refetch
         queryClient.invalidateQueries({
           queryKey: queryKeys.subscriptions.my(),
         })
-        
+
         // Aguardar um pouco e verificar se a subscription foi criada
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        
+
         // Refetch da subscription
         const { data: updatedSubscription } = await refetch()
-        
+
         if (updatedSubscription) {
           setStatus('success')
           // Invalidar novamente para garantir que todos os componentes vejam a atualização
@@ -66,7 +65,7 @@ export default function SubscriptionSuccessPage() {
           // Se ainda não tiver subscription, aguardar mais um pouco (webhook pode estar processando)
           let attempts = 0
           const maxAttempts = 5
-          
+
           while (attempts < maxAttempts) {
             await new Promise((resolve) => setTimeout(resolve, 2000))
             // Invalidar cache antes de cada tentativa
@@ -74,7 +73,7 @@ export default function SubscriptionSuccessPage() {
               queryKey: queryKeys.subscriptions.my(),
             })
             const { data: sub } = await refetch()
-            
+
             if (sub) {
               setStatus('success')
               queryClient.invalidateQueries({
@@ -85,17 +84,17 @@ export default function SubscriptionSuccessPage() {
               }, 2000)
               return
             }
-            
+
             attempts++
           }
-          
+
           // Se após várias tentativas ainda não tiver subscription, mostrar erro
           setStatus('error')
           setErrorMessage('Assinatura ainda não foi processada. Aguarde alguns instantes e verifique na página de assinaturas.')
         }
       } catch (error: any) {
         console.error('Erro ao confirmar sessão:', error)
-        
+
         // Se o erro for que a sessão já foi processada ou não pertence ao tenant,
         // tentar apenas verificar se já existe subscription
         if (error?.response?.status === 400 || error?.response?.status === 404) {
@@ -106,7 +105,7 @@ export default function SubscriptionSuccessPage() {
           // Aguardar e verificar se já existe subscription (webhook pode ter processado)
           await new Promise((resolve) => setTimeout(resolve, 2000))
           const { data: sub } = await refetch()
-          
+
           if (sub) {
             setStatus('success')
             queryClient.invalidateQueries({
@@ -118,7 +117,7 @@ export default function SubscriptionSuccessPage() {
             return
           }
         }
-        
+
         setStatus('error')
         setErrorMessage(
           error?.response?.data?.message ||

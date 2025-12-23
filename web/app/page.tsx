@@ -256,8 +256,8 @@ export default function Home() {
             <Card>
               <CardHeader>
                 <CardDescription>
-                  "A melhor decisão que tomamos. A plataforma transformou
-                  completamente nosso atendimento ao cliente."
+                  &quot;A melhor decisão que tomamos. A plataforma transformou
+                  completamente nosso atendimento ao cliente.&quot;
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -271,8 +271,8 @@ export default function Home() {
             <Card>
               <CardHeader>
                 <CardDescription>
-                  "Incrível facilidade de uso e suporte excepcional. Recomendo
-                  para qualquer empresa que precisa de atendimento eficiente."
+                  &quot;Incrível facilidade de uso e suporte excepcional. Recomendo
+                  para qualquer empresa que precisa de atendimento eficiente.&quot;
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -286,8 +286,8 @@ export default function Home() {
             <Card>
               <CardHeader>
                 <CardDescription>
-                  "ROI impressionante desde o primeiro mês. A plataforma paga
-                  por si mesma com o aumento de produtividade."
+                  &quot;ROI impressionante desde o primeiro mês. A plataforma paga
+                  por si mesma com o aumento de produtividade.&quot;
                 </CardDescription>
               </CardHeader>
               <CardContent>

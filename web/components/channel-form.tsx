@@ -49,18 +49,20 @@ export function ChannelForm({
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (channel) {
-      setName(channel.name || '')
-      setType(channel.type)
-      setIdentifier(channel.identifier || '')
-      setToken('') // Não mostrar token por segurança
-    } else {
-      setName('')
-      setType(ChannelType.WHATSAPP)
-      setIdentifier('')
-      setToken('')
+    if (open) {
+      if (channel) {
+        setName(channel.name || '')
+        setType(channel.type)
+        setIdentifier(channel.identifier || '')
+        setToken('') // Não mostrar token por segurança
+      } else {
+        setName('')
+        setType(ChannelType.WHATSAPP)
+        setIdentifier('')
+        setToken('')
+      }
+      setError(null)
     }
-    setError(null)
   }, [channel, open])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -82,7 +84,7 @@ export function ChannelForm({
       onOpenChange(false)
     } catch (err: unknown) {
       let errorMessage = 'Erro ao salvar canal. Tente novamente.'
-      
+
       if (err instanceof Error) {
         if ('response' in err && err.response) {
           const axiosError = err as { response?: { data?: { message?: string } } }
@@ -91,7 +93,7 @@ export function ChannelForm({
           errorMessage = err.message
         }
       }
-      
+
       setError(errorMessage)
     }
   }
@@ -155,8 +157,8 @@ export function ChannelForm({
                     type === ChannelType.WHATSAPP
                       ? '5511999999999'
                       : type === ChannelType.INSTAGRAM
-                      ? 'ID da página'
-                      : 'ID ou username'
+                        ? 'ID da página'
+                        : 'ID ou username'
                   }
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
